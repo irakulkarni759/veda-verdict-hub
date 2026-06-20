@@ -38,12 +38,12 @@ export const Route = createFileRoute("/trend/$id")({
 });
 
 function TrendPage() {
-  const { trend: t } = Route.useLoaderData();
+  const { trend: t } = Route.useLoaderData() as { trend: Trend };
   const meta = VERDICT_META[t.verdict];
   const category = CATEGORIES.find((c) => c.slug === t.category);
   const related = t.relatedIds
-    .map((id) => TRENDS.find((x) => x.id === id))
-    .filter((x): x is (typeof TRENDS)[number] => Boolean(x));
+    .map((id: string) => TRENDS.find((x) => x.id === id))
+    .filter((x): x is Trend => Boolean(x));
 
   const sentimentPct = Math.round(((t.sentimentScore + 1) / 2) * 100);
 
