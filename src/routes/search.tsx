@@ -85,14 +85,7 @@ function SearchPage() {
 }
 
 function FeatureMatch({ trendId }: { trendId: string }) {
-  // re-fetch for full data
-  const trend = searchTrends("").length === 0 ? null : null;
-  // simpler: use getTrend
-  const t = (() => {
-    return require("@/data/trends").getTrend(trendId) as
-      | import("@/data/trends").Trend
-      | undefined;
-  })();
+  const t: Trend | undefined = getTrend(trendId);
   if (!t) return null;
   const meta = VERDICT_META[t.verdict];
   return (
