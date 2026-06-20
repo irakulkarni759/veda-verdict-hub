@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TrendIdRouteImport } from './routes/trend.$id'
 import { Route as CategorySlugRouteImport } from './routes/category.$slug'
 
 const SearchRoute = SearchRouteImport.update({
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrendIdRoute = TrendIdRouteImport.update({
+  id: '/trend/$id',
+  path: '/trend/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CategorySlugRoute = CategorySlugRouteImport.update({
   id: '/category/$slug',
   path: '/category/$slug',
@@ -33,30 +39,34 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/trend/$id': typeof TrendIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/trend/$id': typeof TrendIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
   '/category/$slug': typeof CategorySlugRoute
+  '/trend/$id': typeof TrendIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/search' | '/category/$slug'
+  fullPaths: '/' | '/search' | '/category/$slug' | '/trend/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/search' | '/category/$slug'
-  id: '__root__' | '/' | '/search' | '/category/$slug'
+  to: '/' | '/search' | '/category/$slug' | '/trend/$id'
+  id: '__root__' | '/' | '/search' | '/category/$slug' | '/trend/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SearchRoute: typeof SearchRoute
   CategorySlugRoute: typeof CategorySlugRoute
+  TrendIdRoute: typeof TrendIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trend/$id': {
+      id: '/trend/$id'
+      path: '/trend/$id'
+      fullPath: '/trend/$id'
+      preLoaderRoute: typeof TrendIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/category/$slug': {
       id: '/category/$slug'
       path: '/category/$slug'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SearchRoute: SearchRoute,
   CategorySlugRoute: CategorySlugRoute,
+  TrendIdRoute: TrendIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

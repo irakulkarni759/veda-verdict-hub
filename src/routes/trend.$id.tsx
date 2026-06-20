@@ -2,7 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { TopNav } from "@/components/TopNav";
 import { TrendCard } from "@/components/TrendCard";
 import { VerdictBadge } from "@/components/VerdictBadge";
-import { CATEGORIES, getTrend, TRENDS } from "@/data/trends";
+import { CATEGORIES, getTrend, TRENDS, type Trend } from "@/data/trends";
 import { VERDICT_META } from "@/lib/verdict";
 
 export const Route = createFileRoute("/trend/$id")({
