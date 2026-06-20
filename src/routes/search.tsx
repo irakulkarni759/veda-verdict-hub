@@ -3,7 +3,7 @@ import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { TrendCard } from "@/components/TrendCard";
 import { VerdictBadge } from "@/components/VerdictBadge";
-import { searchTrends } from "@/data/trends";
+import { getTrend, searchTrends, type Trend } from "@/data/trends";
 import { VERDICT_META } from "@/lib/verdict";
 
 const searchSchema = z.object({
@@ -12,12 +12,13 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/search")({
   validateSearch: searchSchema,
-  head: ({ search }) => ({
+  head: () => ({
     meta: [
-      { title: search.q ? `Search · "${search.q}" — Veda` : "Search — Veda" },
+      { title: "Search — Veda" },
       {
         name: "description",
-        content: "Search Veda for evidence verdicts on wellness, skincare, and haircare trends.",
+        content:
+          "Search Veda for evidence verdicts on wellness, skincare, and haircare trends.",
       },
     ],
   }),
