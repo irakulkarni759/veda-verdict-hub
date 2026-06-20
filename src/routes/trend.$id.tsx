@@ -105,7 +105,7 @@ function TrendPage() {
           <section className="mt-10">
             <SectionHeader eyebrow="What the research says" />
             <ul className="mt-5 grid gap-3 sm:gap-4">
-              {t.evidencePoints.map((point, i) => (
+              {t.evidencePoints.map((point: string, i: number) => (
                 <li
                   key={i}
                   className="glass-card flex items-start gap-4 p-5 sm:p-6"
