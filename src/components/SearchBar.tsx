@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Search } from "lucide-react";
+import { Search, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
@@ -30,21 +30,18 @@ export function SearchBar({
     return (
       <form
         onSubmit={onSubmit}
-        className={cn(
-          "group relative flex w-full max-w-md items-center",
-          className,
-        )}
+        className={cn("group relative flex w-full max-w-md items-center", className)}
       >
         <Search
-          className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-[#54e0a8]"
+          className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground"
           aria-hidden
         />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           autoFocus={autoFocus}
-          placeholder="Search a trend or ingredient…"
-          className="w-full rounded-full border border-white/10 bg-white/5 py-2 pl-9 pr-4 font-sans text-sm text-foreground placeholder:text-muted-foreground/70 outline-none transition-all focus:border-[#54e0a8]/50 focus:bg-white/10"
+          placeholder="Search a trend…"
+          className="w-full rounded-full border border-ink/15 bg-white py-2 pl-9 pr-4 font-sans text-sm text-foreground outline-none transition-all focus:border-ink"
           aria-label="Search trends"
         />
       </form>
@@ -52,31 +49,24 @@ export function SearchBar({
   }
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className={cn("relative w-full max-w-2xl", className)}
-    >
-      <div className="search-glow rounded-2xl">
-        <div className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 backdrop-blur-xl transition-all focus-within:border-[#54e0a8]/60 sm:px-6 sm:py-4">
-          <Search
-            className="h-5 w-5 shrink-0 text-muted-foreground transition-colors group-focus-within:text-[#54e0a8] sm:h-6 sm:w-6"
-            aria-hidden
-          />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            autoFocus={autoFocus}
-            placeholder="Try 'retinoids', 'creatine', 'rosemary oil'…"
-            className="w-full min-w-0 bg-transparent font-sans text-base text-foreground placeholder:text-muted-foreground/70 outline-none sm:text-lg"
-            aria-label="Search a wellness trend"
-          />
-          <button
-            type="submit"
-            className="shrink-0 rounded-xl bg-gradient-to-b from-white to-white/85 px-4 py-2 font-mono text-xs uppercase tracking-[0.18em] text-[#05060d] shadow-[0_8px_30px_-8px_rgba(255,255,255,0.5)] transition-all hover:translate-y-[-1px] hover:shadow-[0_12px_36px_-8px_rgba(84,224,168,0.5)] sm:px-5 sm:py-2.5"
-          >
-            Explore
-          </button>
-        </div>
+    <form onSubmit={onSubmit} className={cn("relative w-full", className)}>
+      <div className="group flex items-center gap-2 rounded-2xl border-2 border-ink bg-white px-4 py-3 transition-all focus-within:shadow-[6px_6px_0_0_rgba(13,13,13,1)] sm:px-5 sm:py-4">
+        <Search className="h-5 w-5 shrink-0 text-ink" aria-hidden />
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          autoFocus={autoFocus}
+          placeholder="Try 'retinoids', 'creatine', 'rosemary oil'…"
+          className="w-full min-w-0 bg-transparent font-sans text-base text-foreground placeholder:text-muted-foreground outline-none sm:text-lg"
+          aria-label="Search a wellness trend"
+        />
+        <button
+          type="submit"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-ink px-3 py-2 font-mono text-[11px] uppercase tracking-[0.18em] text-paper transition-transform hover:translate-x-0.5 sm:px-4"
+        >
+          Verify
+          <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+        </button>
       </div>
     </form>
   );

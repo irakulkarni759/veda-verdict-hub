@@ -7,17 +7,14 @@ interface TopNavProps {
 
 export function TopNav({ showSearch = true }: TopNavProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-white/5 bg-[#05060d]/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-ink/10 bg-paper/85 backdrop-blur-md">
       <div className="mx-auto grid max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6 sm:py-4">
         <Link
           to="/"
-          className="group flex items-center gap-2 font-display text-xl font-semibold tracking-tight text-foreground sm:text-2xl"
+          className="group flex items-center gap-2 font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl"
         >
-          <span
-            aria-hidden
-            className="inline-block h-2 w-2 rounded-full bg-[#54e0a8] shadow-[0_0_14px_2px_rgba(84,224,168,0.6)] transition-transform group-hover:scale-125"
-          />
-          <span className="italic">veda</span>
+          <span aria-hidden className="inline-block h-2 w-2 rounded-full bg-ink" />
+          <span>veda</span>
         </Link>
 
         <div className="hidden min-w-0 justify-center md:flex">
@@ -34,16 +31,15 @@ export function TopNav({ showSearch = true }: TopNavProps) {
           </Link>
           <Link
             to="/"
-            className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground transition-all hover:border-[#54e0a8]/40 hover:text-foreground sm:text-[11px]"
+            className="rounded-full border border-ink/20 bg-white px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-foreground transition-all hover:bg-ink hover:text-paper sm:text-[11px]"
           >
             Home
           </Link>
         </nav>
       </div>
 
-      {/* Mobile search row */}
       {showSearch ? (
-        <div className="border-t border-white/5 px-4 py-2.5 md:hidden">
+        <div className="border-t border-ink/10 px-4 py-2.5 md:hidden">
           <SearchBar size="compact" className="max-w-none" />
         </div>
       ) : null}
