@@ -83,7 +83,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Veda cross-references skincare, haircare, and wellness trends against research and community sentiment to deliver an evidence verdict.",
       },
-      { property: "og:title", content: "Veda — Evidence for wellness trends" },
+      { property: "og:title", content: "Veda — Wellness trends, weighed against the evidence" },
       {
         property: "og:description",
         content:
@@ -91,6 +91,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Veda — Wellness trends, weighed against the evidence" },
+      { name: "description", content: "Veda Verdict evaluates wellness, skincare, and haircare trends against evidence and community sentiment." },
+      { property: "og:description", content: "Veda Verdict evaluates wellness, skincare, and haircare trends against evidence and community sentiment." },
+      { name: "twitter:description", content: "Veda Verdict evaluates wellness, skincare, and haircare trends against evidence and community sentiment." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/375291ba-a785-4ba6-a1ee-d00909dbfec5/id-preview-7de6b91c--9e04c261-24fc-4ebf-8598-475b0bb08c4f.lovable.app-1782066671531.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/375291ba-a785-4ba6-a1ee-d00909dbfec5/id-preview-7de6b91c--9e04c261-24fc-4ebf-8598-475b0bb08c4f.lovable.app-1782066671531.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
