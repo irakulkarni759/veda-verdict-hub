@@ -5,9 +5,10 @@ import { cn } from "@/lib/utils";
 interface CategoryTileProps {
   slug: CategorySlug;
   className?: string;
+  compact?: boolean;
 }
 
-export function CategoryTile({ slug, className }: CategoryTileProps) {
+export function CategoryTile({ slug, className, compact }: CategoryTileProps) {
   const cat = CATEGORIES.find((c) => c.slug === slug);
   if (!cat) return null;
   const count = getTrendsByCategory(slug).length;
@@ -17,30 +18,31 @@ export function CategoryTile({ slug, className }: CategoryTileProps) {
       to="/category/$slug"
       params={{ slug }}
       className={cn(
-        "group glass-card glass-card-hover relative flex flex-col gap-3 overflow-hidden p-5 text-left animate-veda-in",
+        "group paper-card paper-card-hover relative flex flex-col justify-between overflow-hidden text-left animate-veda-in",
+        compact ? "p-3 gap-1" : "p-4 gap-2",
         className,
       )}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-12 -right-12 h-36 w-36 rounded-full bg-[#54e0a8]/10 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
-      />
       <div className="flex items-center justify-between">
         <span
-          className="font-display text-3xl text-[#8fc0ff] transition-transform duration-500 group-hover:scale-110 group-hover:text-[#54e0a8] sm:text-4xl"
+          className="font-display text-2xl text-ink transition-transform duration-300 group-hover:scale-110"
           aria-hidden
         >
           {cat.icon}
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          {count} trends
+        <span className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+          {count}
         </span>
       </div>
       <div>
-        <div className="font-display text-lg font-semibold text-foreground sm:text-xl">
+        <div className="font-display text-sm font-semibold text-foreground sm:text-base">
           {cat.name}
         </div>
-        <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{cat.blurb}</div>
+        {!compact && (
+          <div className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+            {cat.blurb}
+          </div>
+        )}
       </div>
     </Link>
   );

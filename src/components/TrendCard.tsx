@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
 interface TrendCardProps {
   trend: Trend;
   className?: string;
+  compact?: boolean;
 }
 
-export function TrendCard({ trend, className }: TrendCardProps) {
+export function TrendCard({ trend, className, compact }: TrendCardProps) {
   const meta = VERDICT_META[trend.verdict];
   const category = CATEGORIES.find((c) => c.slug === trend.category);
 
@@ -19,44 +20,42 @@ export function TrendCard({ trend, className }: TrendCardProps) {
       to="/trend/$id"
       params={{ id: trend.id }}
       className={cn(
-        "group glass-card glass-card-hover relative block overflow-hidden p-5 sm:p-6 animate-veda-in",
+        "group paper-card paper-card-hover relative block overflow-hidden animate-veda-in",
+        compact ? "p-4" : "p-5 sm:p-6",
         className,
       )}
-      style={{
-        // subtle gradient stripe tinted by verdict
-        backgroundImage: `linear-gradient(180deg, ${meta.color}10 0%, transparent 40%)`,
-      }}
     >
-      <div
+      <span
         aria-hidden
-        className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-60"
+        className="absolute left-0 top-0 h-full w-1"
         style={{ background: meta.color }}
       />
 
       <div className="relative flex items-start justify-between gap-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
           {category?.name ?? trend.category}
         </span>
         <VerdictBadge verdict={trend.verdict} size="sm" />
       </div>
 
-      <h3 className="font-display mt-3 text-xl font-semibold leading-snug text-foreground sm:text-2xl">
+      <h3
+        className={cn(
+          "font-display mt-2 font-semibold leading-tight text-foreground",
+          compact ? "text-base" : "text-lg sm:text-xl",
+        )}
+      >
         {trend.name}
       </h3>
 
-      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-        {trend.summary}
-      </p>
+      {!compact && (
+        <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+          {trend.summary}
+        </p>
+      )}
 
-      <div className="mt-5 flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground/80">
+      <div className="mt-3 flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
         <span>{trend.studyCount} studies</span>
-        <span className="flex items-center gap-2">
-          <span
-            className={cn("h-1.5 w-1.5 rounded-full", meta.dotClass)}
-            aria-hidden
-          />
-          {trend.confidence} conf.
-        </span>
+        <span>{trend.confidence} conf.</span>
       </div>
     </Link>
   );
