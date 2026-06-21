@@ -35,13 +35,21 @@ function HomePage() {
           <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-full bg-ink" />
           veda
         </Link>
-        <div className="hidden items-center gap-6 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground sm:flex">
-          <span>Evidence</span>
-          <span aria-hidden>·</span>
-          <span>Sentiment</span>
-          <span aria-hidden>·</span>
-          <span>Verdict</span>
-        </div>
+        <nav className="hidden flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground sm:flex">
+          {CATEGORIES.map((c, i) => [
+            <Link
+              key={c.slug}
+              to="/category/$slug"
+              params={{ slug: c.slug }}
+              className="transition-colors hover:text-ink"
+            >
+              {c.name}
+            </Link>,
+            i < CATEGORIES.length - 1 && (
+              <span key={`${c.slug}-dot`} aria-hidden>·</span>
+            ),
+          ])}
+        </nav>
         <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
           v1.0
         </span>
