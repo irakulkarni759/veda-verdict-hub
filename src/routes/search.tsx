@@ -3,6 +3,7 @@ import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { TrendCard } from "@/components/TrendCard";
 import { VerdictBadge } from "@/components/VerdictBadge";
+import { UnmappedGenerator } from "@/components/UnmappedGenerator";
 import { getTrend, searchTrends, type Trend } from "@/data/trends";
 import { VERDICT_META } from "@/lib/verdict";
 
@@ -17,8 +18,7 @@ export const Route = createFileRoute("/search")({
       { title: "Search — Veda" },
       {
         name: "description",
-        content:
-          "Search Veda for evidence verdicts on wellness, skincare, and haircare trends.",
+        content: "Search Veda for evidence verdicts on wellness, skincare, and haircare trends.",
       },
     ],
   }),
@@ -49,11 +49,10 @@ function SearchPage() {
 
         {!q ? (
           <div className="glass-card mt-10 p-10 text-center text-muted-foreground">
-            Try searching from the bar above — "retinoids", "creatine",
-            "rosemary oil"…
+            Try searching from the bar above — "retinoids", "creatine", "rosemary oil"…
           </div>
         ) : results.length === 0 ? (
-          <UnmappedState query={q} />
+          <UnmappedGenerator query={q} />
         ) : (
           <div className="mt-10 space-y-10">
             {top ? (
@@ -115,34 +114,5 @@ function FeatureMatch({ trendId }: { trendId: string }) {
         <span>Updated {t.lastUpdated}</span>
       </div>
     </Link>
-  );
-}
-
-function UnmappedState({ query }: { query: string }) {
-  const meta = VERDICT_META.unmapped;
-  return (
-    <div className="mt-10">
-      <div
-        className={`glass-card ${meta.glowClass} p-8 sm:p-10`}
-        style={{ backgroundImage: `linear-gradient(180deg, ${meta.color}12, transparent 50%)` }}
-      >
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 sm:flex sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-              No mapping yet
-            </span>
-            <h2 className="font-display mt-1 truncate text-2xl font-normal italic leading-tight sm:text-4xl">
-              {query}
-            </h2>
-          </div>
-          <VerdictBadge verdict="unmapped" size="lg" />
-        </div>
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-          Not mapped yet — Veda is gathering the evidence. New trends move to a
-          verdict as soon as enough quality studies and community signal
-          accumulate.
-        </p>
-      </div>
-    </div>
   );
 }
