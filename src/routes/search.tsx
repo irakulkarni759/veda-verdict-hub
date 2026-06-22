@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { TopNav } from "@/components/TopNav";
 import { TrendCard } from "@/components/TrendCard";
@@ -14,17 +16,6 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/search")({
   validateSearch: searchSchema,
-  loaderDeps: ({ search }) => ({ q: search.q }),
-  loader: async ({ deps }) => {
-    try {
-      const generated = await (
-        searchGeneratedTrends as unknown as (opts: { data: { q: string } }) => Promise<Trend[]>
-      )({ data: { q: deps.q } });
-      return { generated };
-    } catch (err) {
-      throw new Error("SEARCH LOADER: " + (err instanceof Error ? err.message : JSON.stringify(err)));
-    }
-  },
   head: () => ({
     meta: [
       { title: "Search — Veda" },
@@ -39,12 +30,43 @@ export const Route = createFileRoute("/search")({
 
 function SearchPage() {
   const { q } = Route.useSearch();
-  const { generated } = Route.useLoaderData() as { generated: Trend[] };
+  const callSearchGenerated = useServerFn(searchGeneratedTrends);
+  const [generated, setGenerated] = useState<Trend[]>([]);
+  const [checking, setChecking] = useState(false);
+
+  // Look up already-generated trends client-side (same mechanism as the
+  // generator button). Wrapped so a failure never breaks the page — search
+  // still works with the static results.
+  useEffect(() => {
+    let active = true;
+    const query = q?.trim() ?? "";
+    if (query.length < 2) {
+      setGenerated([]);
+      setChecking(false);
+      return;
+    }
+    setChecking(true);
+    Promise.resolve(callSearchGenerated({ data: { q: query } } as never))
+      .then((res) => {
+        if (active) setGenerated((res as Trend[]) ?? []);
+      })
+      .catch(() => {
+        if (active) setGenerated([]);
+      })
+      .finally(() => {
+        if (active) setChecking(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [q, callSearchGenerated]);
+
   const staticResults = searchTrends(q);
   const seen = new Set(staticResults.map((t) => t.id));
   const results = [...staticResults, ...generated.filter((t) => !seen.has(t.id))];
   const top = results[0];
   const rest = results.slice(1);
+
   return (
     <div className="min-h-screen">
       <TopNav />
@@ -66,7 +88,13 @@ function SearchPage() {
             Try searching from the bar above — "retinoids", "creatine", "rosemary oil"…
           </div>
         ) : results.length === 0 ? (
-          <UnmappedGenerator query={q} />
+          checking ? (
+            <div className="glass-card mt-10 p-10 text-center font-mono text-sm uppercase tracking-[0.18em] text-muted-foreground">
+              Searching…
+            </div>
+          ) : (
+            <UnmappedGenerator query={q} />
+          )
         ) : (
           <div className="mt-10 space-y-10">
             {top ? (
@@ -74,7 +102,7 @@ function SearchPage() {
                 <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                   Strongest match
                 </span>
-                <FeatureMatch trendId={top.id} />
+                <FeatureMatch trend={top} />
               </div>
             ) : null}
 
