@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { SearchBar } from "@/components/SearchBar";
 import { CATEGORIES, getTrendingNow, TRENDS } from "@/data/trends";
+import { getGeneratedCorpusStats } from "@/lib/getGeneratedTrend.server";
 import { VERDICT_META } from "@/lib/verdict";
 
 export const Route = createFileRoute("/")({
@@ -14,15 +15,29 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
+  loader: async () => {
+    const stats = await (
+      getGeneratedCorpusStats as unknown as () => Promise<{
+        total: number;
+        backed: number;
+        mixed: number;
+        debunked: number;
+      }>
+    )();
+    return { stats };
+  },
   component: HomePage,
 });
 
 function HomePage() {
   const trending = getTrendingNow().slice(0, 4);
-  const total = TRENDS.length;
-  const backed = TRENDS.filter((t) => t.verdict === "backed").length;
-  const debunked = TRENDS.filter((t) => t.verdict === "debunked").length;
-  const mixed = TRENDS.filter((t) => t.verdict === "mixed").length;
+  const { stats } = Route.useLoaderData() as {
+    stats: { total: number; backed: number; mixed: number; debunked: number };
+  };
+  const total = TRENDS.length + stats.total;
+  const backed = TRENDS.filter((t) => t.verdict === "backed").length + stats.backed;
+  const debunked = TRENDS.filter((t) => t.verdict === "debunked").length + stats.debunked;
+  const mixed = TRENDS.filter((t) => t.verdict === "mixed").length + stats.mixed;
 
   // marquee strip
   const marqueeItems = TRENDS.slice(0, 14);
