@@ -9,6 +9,7 @@ export interface SearchResult {
   url: string;
   title: string;
   description?: string;
+  rawContent?: string; // Tavily-extracted page text (include_raw_content)
 }
 
 function getTavilyKey(): string {
@@ -25,6 +26,7 @@ interface TavilyResultItem {
   title: string;
   url: string;
   content?: string;
+  raw_content?: string;
 }
 
 interface TavilySearchResponse {
@@ -46,7 +48,11 @@ export async function tavilySearch(query: string, count = 6, retries = 2): Promi
           "Content-Type": "application/json",
           Authorization: `Bearer ${getTavilyKey()}`,
         },
-        body: JSON.stringify({ query, max_results: Math.min(count, 20) }),
+        body: JSON.stringify({
+          query,
+          max_results: Math.min(count, 20),
+          include_raw_content: true,
+        }),
         signal: AbortSignal.timeout(15000),
       });
 
@@ -58,7 +64,12 @@ export async function tavilySearch(query: string, count = 6, retries = 2): Promi
 
       const json = (await res.json()) as TavilySearchResponse;
       const results = json.results ?? [];
-      return results.map((r) => ({ url: r.url, title: r.title, description: r.content }));
+      return results.map((r) => ({
+        url: r.url,
+        title: r.title,
+        description: r.content,
+        rawContent: r.raw_content,
+      }));
     } catch {
       if (attempt === retries) return [];
       await new Promise((r) => setTimeout(r, 800 * (attempt + 1)));
