@@ -60,3 +60,43 @@ export const getGeneratedTrend = createServerFn({ method: "GET" }).handler(
     return rowToTrend(data as GeneratedTrendRow);
   },
 );
+// Search generated trends by query text or name (for the search page, so a
+// trend that's already been generated shows up as a normal result instead of
+// being regenerated from scratch).
+export const searchGeneratedTrends = createServerFn({ method: "GET" }).handler(
+  async (ctx): Promise<Trend[]> => {
+    const ctxData = ctx as unknown as { data: { q: unknown } };
+    const q = String(ctxData.data?.q ?? "").trim();
+    if (q.length < 2) return [];
+
+    // Strip characters that would break PostgREST's or() filter syntax.
+    const like = `%${q.replace(/[,()]/g, " ")}%`;
+    const supabase = getSupabaseServiceClient();
+    const { data, error } = await supabase
+      .from("generated_trends")
+      .select("*")
+      .or(`query.ilike.${like},name.ilike.${like}`)
+      .limit(20);
+
+    if (error || !data) return [];
+    return (data as GeneratedTrendRow[]).map(rowToTrend);
+  },
+);
+
+// Live counts of generated trends, added to the static corpus stats on the
+// home page so the "corpus" number reflects everything that's been generated.
+export const getGeneratedCorpusStats = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ total: number; backed: number; mixed: number; debunked: number }> => {
+    const supabase = getSupabaseServiceClient();
+    const { data, error } = await supabase.from("generated_trends").select("verdict");
+    if (error || !data) return { total: 0, backed: 0, mixed: 0, debunked: 0 };
+
+    const rows = data as { verdict: string }[];
+    return {
+      total: rows.length,
+      backed: rows.filter((r) => r.verdict === "backed").length,
+      mixed: rows.filter((r) => r.verdict === "mixed").length,
+      debunked: rows.filter((r) => r.verdict === "debunked").length,
+    };
+  },
+);
