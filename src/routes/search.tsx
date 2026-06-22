@@ -16,10 +16,14 @@ export const Route = createFileRoute("/search")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => ({ q: search.q }),
   loader: async ({ deps }) => {
-    const generated = await (
-      searchGeneratedTrends as unknown as (opts: { data: { q: string } }) => Promise<Trend[]>
-    )({ data: { q: deps.q } });
-    return { generated };
+    try {
+      const generated = await (
+        searchGeneratedTrends as unknown as (opts: { data: { q: string } }) => Promise<Trend[]>
+      )({ data: { q: deps.q } });
+      return { generated };
+    } catch (err) {
+      throw new Error("SEARCH LOADER: " + (err instanceof Error ? err.message : JSON.stringify(err)));
+    }
   },
   head: () => ({
     meta: [
