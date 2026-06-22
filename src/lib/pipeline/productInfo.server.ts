@@ -23,8 +23,53 @@ const SKIP_DOMAINS = [
 
 const INGREDIENT_DBS = ["incidecoder.com", "skincarisma.com", "cosdna.com"];
 
-export async function findProductPages(userQuery: string, maxResults = 6): Promise<SearchResult[]> {
-  const searchQueries = [`${userQuery} ingredients`, `${userQuery} INCI ingredients list`];
+export type SubjectType = "product" | "device" | "practice" | "unknown";
+
+export interface QueryClass {
+  subject_type: SubjectType;
+  modality: string; // for devices: the physical modality in scientific terms
+}
+
+// Cheap query-only classification BEFORE we search. This decides what we even
+// search for: a device needs literature on its modality (microcurrent, LED,
+// etc.) acting on skin — searching "<device> ingredients" first would drag the
+// whole pipeline toward the ingredients of whatever serum it uses instead.
+export async function classifyQuery(userQuery: string): Promise<QueryClass> {
+  const prompt = `Classify this wellness/skincare query for an evidence pipeline. Return JSON only, no preamble:
+{"subject_type":"product|device|practice","modality":"for a device only: its physical modality in scientific terms (e.g. 'microcurrent','iontophoresis','galvanic current','LED photobiomodulation','radiofrequency','ultrasound'); otherwise empty string"}
+
+Query: ${userQuery}
+
+- "device": a powered or physical skincare TOOL — microcurrent, EMS, a galvanic/ionic "booster"/"infuser"/"wand", LED/red-light, radiofrequency, ultrasonic, dermaroller. These work by a physical action on skin, not by a leave-on formulation.
+- "product": a leave-on or rinse-off FORMULATION (serum, cream, mask, sunscreen, toner).
+- "practice": a behaviour or routine (fasting, cold plunge, sauna, breathwork).
+No explanation.`;
+
+  const raw = await askClaude(prompt, 200);
+  const parsed = parseClaudeJson<{ subject_type?: string; modality?: string }>(raw);
+  const subject_type = (parsed?.subject_type as SubjectType) ?? "unknown";
+  return {
+    subject_type: ["product", "device", "practice"].includes(subject_type) ? subject_type : "product",
+    modality: parsed?.modality ?? "",
+  };
+}
+
+export async function findProductPages(
+  userQuery: string,
+  cls: QueryClass,
+  maxResults = 6,
+): Promise<SearchResult[]> {
+  // Search strategy depends on what this actually is.
+  const searchQueries =
+    cls.subject_type === "device"
+      ? [
+          `${userQuery} how it works technology`,
+          cls.modality ? `${cls.modality} skin clinical study` : `${userQuery} mechanism skin`,
+          `${userQuery} ingredients`, // still capture any paired serum's actives
+        ]
+      : cls.subject_type === "practice"
+        ? [`${userQuery} how it works`, `${userQuery} effects study`]
+        : [`${userQuery} ingredients`, `${userQuery} INCI ingredients list`];
 
   const results: SearchResult[] = [];
   const seen = new Set<string>();
@@ -38,18 +83,18 @@ export async function findProductPages(userQuery: string, maxResults = 6): Promi
     }
   }
 
-  // Ingredient databases carry the full INCI list in clean static HTML —
-  // float them to the front so they survive the top-3 cut.
-  results.sort((a, b) => {
-    const aScore = INGREDIENT_DBS.some((d) => a.url.includes(d)) ? 0 : 1;
-    const bScore = INGREDIENT_DBS.some((d) => b.url.includes(d)) ? 0 : 1;
-    return aScore - bScore;
-  });
+  // Only float ingredient databases to the front for actual formulations —
+  // for a device those pages would crowd out the how-it-works sources.
+  if (cls.subject_type === "product") {
+    results.sort((a, b) => {
+      const aScore = INGREDIENT_DBS.some((d) => a.url.includes(d)) ? 0 : 1;
+      const bScore = INGREDIENT_DBS.some((d) => b.url.includes(d)) ? 0 : 1;
+      return aScore - bScore;
+    });
+  }
 
   return results.slice(0, 8);
 }
-
-export type SubjectType = "product" | "device" | "practice" | "unknown";
 
 export interface ProductInfo {
   subject_type: SubjectType;
@@ -77,11 +122,15 @@ interface RawProductInfo {
 export async function extractProductInfoFromText(
   userQuery: string,
   scrapedTexts: string[],
+  cls?: QueryClass,
 ): Promise<ProductInfo> {
   const combinedText = scrapedTexts.join("\n\n").slice(0, 45000);
+  const classHint = cls
+    ? `\nPreliminary classification (trust this unless the text clearly contradicts it): subject_type=${cls.subject_type}${cls.modality ? `, modality=${cls.modality}` : ""}\n`
+    : "";
   const prompt = `You are extracting product evidence information for Veda.
 User query:
-${userQuery}
+${userQuery}${classHint}
 Website text:
 ${combinedText}
 Return valid JSON only:
@@ -136,7 +185,8 @@ Rules:
 }
 
 export async function autoExtractProductInfo(userQuery: string): Promise<ProductInfo> {
-  const pages = await findProductPages(userQuery);
+  const cls = await classifyQuery(userQuery);
+  const pages = await findProductPages(userQuery, cls);
 
   if (pages.length === 0) {
     return {
@@ -163,7 +213,7 @@ export async function autoExtractProductInfo(userQuery: string): Promise<Product
     if (text) scrapedTexts.push(`SOURCE: ${r.url}\n${text.slice(0, 15000)}`);
   }
 
-  const info = await extractProductInfoFromText(userQuery, scrapedTexts);
+  const info = await extractProductInfoFromText(userQuery, scrapedTexts, cls);
   info.source_urls = pages.map((r) => r.url);
   return info;
 }
