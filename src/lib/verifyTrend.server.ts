@@ -168,9 +168,6 @@ export const verifyTrend = createServerFn({ method: "POST" }).handler(
     // result the user is waiting on — log and move on.
     const { error } = await supabase.from("generated_trends").upsert(row, { onConflict: "id" });
     if (error) {
-      console.error("Failed to persist generated trend:", error);
-    }
-
-    return rowToTrend(row);
-  },
+      throw new Error("PERSIST FAILED: " + JSON.stringify(error));
+    },
 );
