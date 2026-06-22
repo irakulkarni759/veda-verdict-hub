@@ -1,4 +1,4 @@
-import { braveSearch } from "./braveSearch.server";
+import { tavilySearch } from "./tavilySearch.server";
 import { scrapePageText } from "./htmlText.server";
 import { askClaude, parseClaudeJson } from "./anthropic.server";
 
@@ -80,7 +80,7 @@ export async function findDiscussionPages(
   const seen = new Set<string>();
 
   for (const q of searchQueries) {
-    const results = await braveSearch(q, maxResults);
+    const results = await tavilySearch(q, maxResults);
     for (const r of results) {
       if (!r.url || seen.has(r.url)) continue;
       if (SKIP_DOMAINS.some((d) => r.url.includes(d))) continue;
