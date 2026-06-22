@@ -100,3 +100,22 @@ export const getGeneratedCorpusStats = createServerFn({ method: "GET" }).handler
     };
   },
 );
+// Fetch all generated trends for a given category slug, for the category page.
+export const getGeneratedTrendsByCategory = createServerFn({ method: "GET" }).handler(
+  async (ctx): Promise<Trend[]> => {
+    const ctxData = ctx as unknown as { data: { category: unknown } };
+    const category = String(ctxData.data?.category ?? "").trim();
+    if (!category) return [];
+
+    const supabase = getSupabaseServiceClient();
+    const { data, error } = await supabase
+      .from("generated_trends")
+      .select("*")
+      .eq("category", category)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error || !data) return [];
+    return (data as GeneratedTrendRow[]).map(rowToTrend);
+  },
+);
