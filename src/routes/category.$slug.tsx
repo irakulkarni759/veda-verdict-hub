@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TopNav } from "@/components/TopNav";
 import { TrendCard } from "@/components/TrendCard";
 import {
@@ -9,6 +9,9 @@ import {
   type Verdict,
 } from "@/data/trends";
 import { VERDICT_FILTERS } from "@/lib/verdict";
+import { getGeneratedTrendsByCategory } from "@/lib/getGeneratedTrend.server";
+import { useServerFn } from "@tanstack/react-start";
+import type { Trend } from "@/data/trends";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/category/$slug")({
@@ -49,7 +52,19 @@ function CategoryPage() {
   const { category } = Route.useLoaderData();
   const [filter, setFilter] = useState<"all" | Verdict>("all");
   const all = getTrendsByCategory(category.slug as CategorySlug);
-  const trends = filter === "all" ? all : all.filter((t) => t.verdict === filter);
+  const callGetGenerated = useServerFn(getGeneratedTrendsByCategory);
+  const [generated, setGenerated] = useState<Trend[]>([]);
+  useEffect(() => {
+    Promise.resolve(callGetGenerated({ data: { category: category.slug } } as never))
+      .then((res) => {
+        const rows = (res as Trend[]) ?? [];
+        const seen = new Set(all.map((t) => t.id));
+        setGenerated(rows.filter((t) => !seen.has(t.id)));
+      })
+      .catch(() => {});
+  }, [category.slug]);
+  const allTrends = [...all, ...generated];
+  const trends = filter === "all" ? allTrends : allTrends.filter((t) => t.verdict === filter);
 
   return (
     <div className="min-h-screen">
@@ -74,7 +89,7 @@ function CategoryPage() {
                 </h1>
               </div>
               <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-                {category.blurb} — {all.length} mapped trends.
+                {category.blurb} — {allTrends.length} mapped trends.
               </p>
             </div>
           </div>
@@ -84,7 +99,7 @@ function CategoryPage() {
             {VERDICT_FILTERS.map((f) => {
               const active = filter === f.value;
               const count =
-                f.value === "all" ? all.length : all.filter((t) => t.verdict === f.value).length;
+                f.value === "all" ? allTrends.length : allTrends.filter((t) => t.verdict === f.value).length;
               return (
                 <button
                   key={f.value}
