@@ -103,7 +103,18 @@ const verifyTrendInput = (query: unknown): string => {
   }
   return query.trim();
 };
-
+// Turn a source URL into a readable attribution label, e.g.
+// reddit.com/r/SkincareAddiction/... -> "r/SkincareAddiction", else the domain.
+function handleFromUrl(url: string): string {
+  if (!url) return "Community";
+  const sub = url.match(/reddit\.com\/r\/([A-Za-z0-9_]+)/i);
+  if (sub) return `r/${sub[1]}`;
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "Community";
+  }
+}
 export const verifyTrend = createServerFn({ method: "POST" }).handler(
   async (ctx): Promise<Trend> => {
     const ctxData = ctx as unknown as { data: { query: unknown } };
@@ -155,9 +166,9 @@ export const verifyTrend = createServerFn({ method: "POST" }).handler(
       evidence_points: synthesis.evidencePoints,
       sentiment_score: sentiment ? sentimentToScore(sentiment.overall) : 0,
       opinions: sentiment
-        ? sentiment.quotes.slice(0, 3).map((text, i) => ({
-            handle: sentiment?.source_urls[i]?.includes("reddit.com") ? "r/community" : "Community",
-            text,
+        ? sentiment.quotes.slice(0, 3).map((q) => ({
+            handle: handleFromUrl(q.url),
+            text: q.text,
           }))
         : [],
       related_ids: [],
