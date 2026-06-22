@@ -97,17 +97,28 @@ export interface SentimentResult {
   overall: string;
   positive_themes: string[];
   negative_themes: string[];
-  quotes: string[];
+  quotes: { text: string; url: string }[];
   notes: string;
   source_urls: string[];
   excluded_sources: string[];
+}
+
+// Normalize text so a quote can be checked against the source it supposedly
+// came from, tolerant of smart quotes / punctuation / spacing differences.
+function normalizeForMatch(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[\u2018\u2019\u201c\u201d]/g, "'")
+    .replace(/[^a-z0-9' ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 interface RawSentiment {
   overall?: string;
   positive_themes?: string[];
   negative_themes?: string[];
-  quotes?: string[];
+  quotes?: { text?: string; source?: string }[];
   notes?: string;
   excluded_sources?: string[];
 }
@@ -122,8 +133,7 @@ export async function analyzeCommunitySentiment(
   const { forum, blog } = await findDiscussionPages(userQuery);
   const ordered = [...forum, ...blog.slice(0, maxBlogs)].slice(0, maxPages);
 
-  const texts: string[] = [];
-  const usedUrls: string[] = [];
+  const sources: { url: string; text: string; kind: "FORUM" | "BLOG" }[] = [];
   for (const r of ordered) {
     // Prefer Tavily's own extracted text — it fetches the page server-side and
     // works for Reddit/forums that block our direct static scraper. Fall back
@@ -132,12 +142,12 @@ export async function analyzeCommunitySentiment(
     if (!text) text = (r.description ?? "").trim();
     if (!text) text = await scrapePageText(r.url, 8000);
     if (text) {
-      texts.push(`SOURCE (${isForum(r.url) ? "FORUM" : "BLOG"}): ${r.url}\n${text.slice(0, 8000)}`);
-      usedUrls.push(r.url);
+      sources.push({ url: r.url, text: text.slice(0, 8000), kind: isForum(r.url) ? "FORUM" : "BLOG" });
     }
   }
+  const usedUrls = sources.map((s) => s.url);
 
-  if (texts.length === 0) {
+  if (sources.length === 0) {
     return {
       overall: "unknown",
       positive_themes: [],
@@ -149,7 +159,10 @@ export async function analyzeCommunitySentiment(
     };
   }
 
-  const combined = texts.join("\n\n---\n\n").slice(0, 28000);
+  const combined = sources
+    .map((s) => `SOURCE (${s.kind}) ${s.url}\n${s.text}`)
+    .join("\n\n---\n\n")
+    .slice(0, 28000);
   const prompt = `You are analyzing COMMUNITY SENTIMENT for a wellness/skincare product.
 This is anecdotal user opinion - NOT scientific evidence.
 
@@ -171,13 +184,15 @@ Return valid JSON only, no preamble:
   "overall": "positive / mostly positive / mixed / mostly negative / negative",
   "positive_themes": ["short phrases users genuinely praise"],
   "negative_themes": ["short phrases for genuine complaints / skepticism"],
-  "quotes": ["2-4 short real user quotes, each under 25 words, verbatim, from GENUINE sources only"],
+  "quotes": [{"text":"a VERBATIM quote copied exactly from one source, under 25 words","source":"the exact SOURCE url that quote was copied from"}],
   "notes": "1-2 sentences: how many sources were genuine vs excluded as promotional, and overall reliability",
   "excluded_sources": ["URLs you judged promotional/affiliate and excluded"]
 }
 
 Rules:
-- Base everything ONLY on genuine (non-promotional) text. Do not invent quotes.
+- Quotes MUST be copied word-for-word from the source text above — do NOT paraphrase, summarize, or invent. If you cannot find a real verbatim quote, return an empty quotes array.
+- Each quote's "source" must be the exact URL of the source it came from.
+- Base everything ONLY on genuine (non-promotional) text.
 - If a source is marketing, exclude it and note it in excluded_sources.
 - If ALL sources look promotional, set overall to "unknown" and say so in notes.`;
 
@@ -196,11 +211,34 @@ Rules:
     };
   }
 
+  // Anti-hallucination guard: only keep a quote if it actually appears in the
+  // scraped text. A made-up or paraphrased "quote" won't match and is dropped.
+  const normalizedByUrl = new Map(sources.map((s) => [s.url, normalizeForMatch(s.text)]));
+  const allNormalized = sources.map((s) => normalizeForMatch(s.text)).join(" \n ");
+  const verifiedQuotes: { text: string; url: string }[] = [];
+  for (const q of parsed.quotes ?? []) {
+    const text = (q?.text ?? "").trim();
+    if (!text) continue;
+    // Use the first ~10 words as the probe — a verbatim run that long is not
+    // something the model could match by coincidence if it invented the quote.
+    const probe = normalizeForMatch(text).split(" ").filter(Boolean).slice(0, 10).join(" ");
+    if (!probe) continue;
+    const claimed = q?.source ? normalizedByUrl.get(q.source) : undefined;
+    if (claimed && claimed.includes(probe)) {
+      verifiedQuotes.push({ text, url: q!.source! });
+    } else if (allNormalized.includes(probe)) {
+      // Quote is real but attributed to the wrong source — find the real one.
+      const realUrl = sources.find((s) => normalizeForMatch(s.text).includes(probe))?.url ?? "";
+      verifiedQuotes.push({ text, url: realUrl });
+    }
+    // else: not found in any source → hallucinated/paraphrased → drop it.
+  }
+
   return {
     overall: parsed.overall ?? "unknown",
     positive_themes: parsed.positive_themes ?? [],
     negative_themes: parsed.negative_themes ?? [],
-    quotes: parsed.quotes ?? [],
+    quotes: verifiedQuotes,
     notes: parsed.notes ?? "",
     source_urls: usedUrls,
     excluded_sources: parsed.excluded_sources ?? [],
