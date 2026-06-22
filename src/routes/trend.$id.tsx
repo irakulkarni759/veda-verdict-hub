@@ -4,7 +4,7 @@ import { TrendCard } from "@/components/TrendCard";
 import { VerdictBadge } from "@/components/VerdictBadge";
 import { CATEGORIES, getTrend, TRENDS, type Trend } from "@/data/trends";
 import { VERDICT_META } from "@/lib/verdict";
-
+import { getGeneratedTrend } from "@/lib/getGeneratedTrend.server";
 export const Route = createFileRoute("/trend/$id")({
   head: ({ params }) => {
     const t = getTrend(params.id);
@@ -19,10 +19,16 @@ export const Route = createFileRoute("/trend/$id")({
       ],
     };
   },
-  loader: ({ params }) => {
-    const trend = getTrend(params.id);
-    if (!trend) throw notFound();
-    return { trend };
+  loader: async ({ params }) => {
+    const local = getTrend(params.id);
+    if (local) return { trend: local };
+
+    // Not a curated trend — fall back to the generated_trends table.
+    const generated = await (
+      getGeneratedTrend as unknown as (opts: { data: { id: string } }) => Promise<Trend | null>
+    )({ data: { id: params.id } });
+    if (!generated) throw notFound();
+    return { trend: generated };
   },
   notFoundComponent: () => (
     <div className="flex min-h-screen items-center justify-center p-6 text-center">
