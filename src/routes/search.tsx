@@ -4,7 +4,8 @@ import { TopNav } from "@/components/TopNav";
 import { TrendCard } from "@/components/TrendCard";
 import { VerdictBadge } from "@/components/VerdictBadge";
 import { UnmappedGenerator } from "@/components/UnmappedGenerator";
-import { getTrend, searchTrends, type Trend } from "@/data/trends";
+import { searchTrends, type Trend } from "@/data/trends";
+import { searchGeneratedTrends } from "@/lib/getGeneratedTrend.server";
 import { VERDICT_META } from "@/lib/verdict";
 
 const searchSchema = z.object({
@@ -13,6 +14,13 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/search")({
   validateSearch: searchSchema,
+  loaderDeps: ({ search }) => ({ q: search.q }),
+  loader: async ({ deps }) => {
+    const generated = await (
+      searchGeneratedTrends as unknown as (opts: { data: { q: string } }) => Promise<Trend[]>
+    )({ data: { q: deps.q } });
+    return { generated };
+  },
   head: () => ({
     meta: [
       { title: "Search — Veda" },
@@ -27,10 +35,12 @@ export const Route = createFileRoute("/search")({
 
 function SearchPage() {
   const { q } = Route.useSearch();
-  const results = searchTrends(q);
+  const { generated } = Route.useLoaderData() as { generated: Trend[] };
+  const staticResults = searchTrends(q);
+  const seen = new Set(staticResults.map((t) => t.id));
+  const results = [...staticResults, ...generated.filter((t) => !seen.has(t.id))];
   const top = results[0];
   const rest = results.slice(1);
-
   return (
     <div className="min-h-screen">
       <TopNav />
@@ -83,9 +93,7 @@ function SearchPage() {
   );
 }
 
-function FeatureMatch({ trendId }: { trendId: string }) {
-  const t: Trend | undefined = getTrend(trendId);
-  if (!t) return null;
+function FeatureMatch({ trend: t }: { trend: Trend }) {
   const meta = VERDICT_META[t.verdict];
   return (
     <Link
