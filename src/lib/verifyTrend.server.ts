@@ -125,13 +125,11 @@ export const verifyTrend = createServerFn({ method: "POST" }).handler(
 
     let sentiment: SentimentResult | null = null;
     try {
-      sentiment = await analyzeCommunitySentiment(query);
-    } catch {
-      // Sentiment is supplementary — a failure here shouldn't sink the whole
-      // verdict. Mirrors the notebook's try/except around this same call.
-      sentiment = null;
-    }
-
+        sentiment = await analyzeCommunitySentiment(query);
+      } catch (err) {
+        console.error("[sentiment] failed for query:", query, err);
+        sentiment = null;
+      }
     const layers = await runPubmedLayers({
       subject: productInfo.subject || query,
       claim: productInfo.claim || query,
