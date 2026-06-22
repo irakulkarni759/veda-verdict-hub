@@ -1,4 +1,4 @@
-import { tavilySearch } from "./tavilySearch.server";
+import { tavilySearch, type SearchResult } from "./tavilySearch.server";
 import { scrapePageText } from "./htmlText.server";
 import { askClaude, parseClaudeJson } from "./anthropic.server";
 
@@ -23,31 +23,33 @@ const SKIP_DOMAINS = [
 
 const INGREDIENT_DBS = ["incidecoder.com", "skincarisma.com", "cosdna.com"];
 
-export async function findProductPages(userQuery: string, maxResults = 6): Promise<string[]> {
+export async function findProductPages(userQuery: string, maxResults = 6): Promise<SearchResult[]> {
   const searchQueries = [`${userQuery} ingredients`, `${userQuery} INCI ingredients list`];
 
-  const urls: string[] = [];
+  const results: SearchResult[] = [];
+  const seen = new Set<string>();
   for (const q of searchQueries) {
-    const results = await tavilySearch(q, maxResults);
-    for (const r of results) {
-      if (!r.url) continue;
+    const found = await tavilySearch(q, maxResults);
+    for (const r of found) {
+      if (!r.url || seen.has(r.url)) continue;
       if (SKIP_DOMAINS.some((d) => r.url.includes(d))) continue;
-      if (!urls.includes(r.url)) urls.push(r.url);
+      seen.add(r.url);
+      results.push(r);
     }
   }
 
   // Ingredient databases carry the full INCI list in clean static HTML —
   // float them to the front so they survive the top-3 cut.
-  urls.sort((a, b) => {
-    const aScore = INGREDIENT_DBS.some((d) => a.includes(d)) ? 0 : 1;
-    const bScore = INGREDIENT_DBS.some((d) => b.includes(d)) ? 0 : 1;
+  results.sort((a, b) => {
+    const aScore = INGREDIENT_DBS.some((d) => a.url.includes(d)) ? 0 : 1;
+    const bScore = INGREDIENT_DBS.some((d) => b.url.includes(d)) ? 0 : 1;
     return aScore - bScore;
   });
 
-  return urls.slice(0, 8);
+  return results.slice(0, 8);
 }
 
-export type SubjectType = "product" | "practice" | "unknown";
+export type SubjectType = "product" | "device" | "practice" | "unknown";
 
 export interface ProductInfo {
   subject_type: SubjectType;
@@ -84,7 +86,7 @@ Website text:
 ${combinedText}
 Return valid JSON only:
 {
-  "subject_type": "product or practice",
+  "subject_type": "product, device, or practice",
   "subject": "the product name OR the practice name (e.g. 'cold water immersion')",
   "claim": "the effect being evaluated, phrased neutrally (e.g. 'lowers cortisol / reduces stress')",
   "ingredients": [],
@@ -94,8 +96,10 @@ Return valid JSON only:
   "notes": ""
 }
 Rules:
-- subject_type is "product" whenever an ingredient list (INCI) is present in the text. Only use "practice" when there is NO product and NO ingredients (cold plunging, fasting, sauna, breathwork, etc.). A named branded item like a lip mask, cream, or serum is ALWAYS a product, never a practice.
-- subject is the specific product being evaluated (e.g. "Laneige Lip Sleeping Mask"), not a generic category ("overnight lip masks").
+- subject_type is "device" when the subject is a powered or physical skincare TOOL — microcurrent, EMS, galvanic/ionic infuser, LED / red-light, radiofrequency, ultrasonic, dermaroller, etc. A "booster", "infuser", or "wand" that drives serum into skin via current or light is a DEVICE, not a serum.
+- subject_type is "product" for a leave-on / rinse-off FORMULATION with an ingredient list and no device action. Use "practice" only when there is NO product and NO device (cold plunging, fasting, sauna, breathwork, etc.).
+- For a DEVICE, the mechanisms MUST name the physical modality and how it acts on skin — e.g. "microcurrent stimulation", "galvanic / iontophoretic current enhancing transdermal absorption", "LED photobiomodulation", "radiofrequency dermal heating". Do NOT reduce a device to just the ingredients of a serum it uses; the device's own mode of action is the primary thing to evaluate. List any serum ingredients separately in "ingredients" if present, but mechanisms lead with the device action.
+- subject is the specific item being evaluated (e.g. "Medicube Booster Pro", "Laneige Lip Sleeping Mask"), not a generic category.
 - claim is the effect/benefit being evaluated, stated neutrally - NOT attributed to a brand.
 - Extract the FULL ingredient list when one is present (INCI lists, "Ingredients:" blocks). Do NOT limit to "key actives" - capture every ingredient you can read, in order.
 - Ignore site navigation, promotions, rewards, shipping, and login text; extract only from the product/ingredient content.
@@ -132,9 +136,9 @@ Rules:
 }
 
 export async function autoExtractProductInfo(userQuery: string): Promise<ProductInfo> {
-  const urls = await findProductPages(userQuery);
+  const pages = await findProductPages(userQuery);
 
-  if (urls.length === 0) {
+  if (pages.length === 0) {
     return {
       subject_type: "unknown",
       subject: userQuery,
@@ -148,12 +152,18 @@ export async function autoExtractProductInfo(userQuery: string): Promise<Product
     };
   }
 
-  const candidateUrls = urls.slice(0, 3);
-  const scrapedTexts = (await Promise.all(candidateUrls.map((u) => scrapePageText(u)))).filter(
-    Boolean,
-  );
+  // Prefer Tavily's server-side extracted text — it reads JS-rendered brand
+  // pages (Shopify storefronts, etc.) that our static scraper can't. Fall back
+  // to a direct scrape only when Tavily returned no content for that page.
+  const candidates = pages.slice(0, 3);
+  const scrapedTexts: string[] = [];
+  for (const r of candidates) {
+    let text = (r.rawContent ?? "").trim();
+    if (!text) text = await scrapePageText(r.url);
+    if (text) scrapedTexts.push(`SOURCE: ${r.url}\n${text.slice(0, 15000)}`);
+  }
 
   const info = await extractProductInfoFromText(userQuery, scrapedTexts);
-  info.source_urls = urls;
+  info.source_urls = pages.map((r) => r.url);
   return info;
 }
