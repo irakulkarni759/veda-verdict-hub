@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import type { CategorySlug, Trend } from "@/data/trends";
 import { getSupabaseServiceClient } from "./supabase.server";
 import { autoExtractProductInfo } from "./pipeline/productInfo.server";
@@ -98,12 +97,17 @@ function guessCategory(subject: string, claim: string): CategorySlug {
   return "supplements";
 }
 
-const verifyTrendInput = z.object({ query: z.string().min(2).max(120) });
+const verifyTrendInput = (query: unknown): string => {
+  if (typeof query !== "string" || query.trim().length < 2 || query.trim().length > 120) {
+    throw new Error("Query must be between 2 and 120 characters.");
+  }
+  return query.trim();
+};
 
-export const verifyTrend = createServerFn({ method: "POST" })
-  .validator(verifyTrendInput)
-  .handler(async ({ data }): Promise<Trend> => {
-    const query = data.query.trim();
+export const verifyTrend = createServerFn({ method: "POST" }).handler(
+  async (ctx): Promise<Trend> => {
+    const ctxData = ctx as unknown as { data: { query: unknown } };
+    const query = verifyTrendInput(ctxData.data?.query);
     const normalized = query.toLowerCase();
     const supabase = getSupabaseServiceClient();
 
@@ -170,4 +174,5 @@ export const verifyTrend = createServerFn({ method: "POST" })
     }
 
     return rowToTrend(row);
-  });
+  },
+);
