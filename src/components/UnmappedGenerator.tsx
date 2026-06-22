@@ -21,7 +21,7 @@ export function UnmappedGenerator({ query }: { query: string }) {
     setStatus("loading");
     setErrorMessage("");
     try {
-      const trend = await callVerifyTrend({ data: { query } });
+      const trend = await callVerifyTrend({ data: { query } } as never);
       setResult(trend);
       setStatus("idle");
     } catch (e) {
