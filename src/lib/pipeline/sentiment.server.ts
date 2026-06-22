@@ -1,4 +1,4 @@
-import { tavilySearch } from "./tavilySearch.server";
+import { tavilySearch, type SearchResult } from "./tavilySearch.server";
 import { scrapePageText } from "./htmlText.server";
 import { askClaude, parseClaudeJson } from "./anthropic.server";
 
@@ -67,7 +67,7 @@ function looksAffiliate(url: string): boolean {
 export async function findDiscussionPages(
   userQuery: string,
   maxResults = 6,
-): Promise<{ forumUrls: string[]; blogUrls: string[] }> {
+): Promise<{ forum: SearchResult[]; blog: SearchResult[] }> {
   // Queries biased toward honest discussion, NOT "review" (which is affiliate-bait)
   const searchQueries = [
     `site:reddit.com ${userQuery}`,
@@ -75,8 +75,8 @@ export async function findDiscussionPages(
     `${userQuery} my experience`,
   ];
 
-  const forumUrls: string[] = [];
-  const blogUrls: string[] = [];
+  const forum: SearchResult[] = [];
+  const blog: SearchResult[] = [];
   const seen = new Set<string>();
 
   for (const q of searchQueries) {
@@ -86,11 +86,11 @@ export async function findDiscussionPages(
       if (SKIP_DOMAINS.some((d) => r.url.includes(d))) continue;
       if (looksAffiliate(r.url)) continue;
       seen.add(r.url);
-      (isForum(r.url) ? forumUrls : blogUrls).push(r.url);
+      (isForum(r.url) ? forum : blog).push(r);
     }
   }
 
-  return { forumUrls, blogUrls };
+  return { forum, blog };
 }
 
 export interface SentimentResult {
@@ -119,16 +119,21 @@ export async function analyzeCommunitySentiment(
   maxPages = 5,
   maxBlogs = 2,
 ): Promise<SentimentResult> {
-  const { forumUrls, blogUrls } = await findDiscussionPages(userQuery);
-  const ordered = [...forumUrls, ...blogUrls.slice(0, maxBlogs)].slice(0, maxPages);
+  const { forum, blog } = await findDiscussionPages(userQuery);
+  const ordered = [...forum, ...blog.slice(0, maxBlogs)].slice(0, maxPages);
 
   const texts: string[] = [];
   const usedUrls: string[] = [];
-  for (const url of ordered) {
-    const text = await scrapePageText(url, 8000);
+  for (const r of ordered) {
+    // Prefer Tavily's own extracted text — it fetches the page server-side and
+    // works for Reddit/forums that block our direct static scraper. Fall back
+    // to the snippet, then to scraping, only if needed.
+    let text = (r.rawContent ?? "").trim();
+    if (!text) text = (r.description ?? "").trim();
+    if (!text) text = await scrapePageText(r.url, 8000);
     if (text) {
-      texts.push(`SOURCE (${isForum(url) ? "FORUM" : "BLOG"}): ${url}\n${text}`);
-      usedUrls.push(url);
+      texts.push(`SOURCE (${isForum(r.url) ? "FORUM" : "BLOG"}): ${r.url}\n${text.slice(0, 8000)}`);
+      usedUrls.push(r.url);
     }
   }
 
