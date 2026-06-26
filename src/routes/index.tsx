@@ -1,8 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import { CATEGORIES, getTrendingNow, TRENDS } from "@/data/trends";
-import { getGeneratedCorpusStats } from "@/lib/getGeneratedTrend.server";
 import { VERDICT_META } from "@/lib/verdict";
+import {
+  getRecentSearches,
+  subscribeRecentSearches,
+  SEED_SEARCHES,
+  type RecentSearch,
+} from "@/lib/recentSearches";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,39 +21,29 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  loader: async () => {
-    const stats = await (
-      getGeneratedCorpusStats as unknown as () => Promise<{
-        total: number;
-        backed: number;
-        mixed: number;
-        debunked: number;
-      }>
-    )();
-    return { stats };
-  },
   component: HomePage,
 });
 
-// Curated glyph mosaic — hand-printed feeling icons drawn from Indian decorative motifs
-const MOSAIC_GLYPHS = [
-  "☀", "✺", "❋", "◎", "❖", "△", "☾", "◍", "✦", "⟡", "✿", "❀",
-  "☘", "✸", "✜", "◈", "✹", "❂", "❁", "⌘", "◉", "✱", "❃", "⚘",
-];
-
 function HomePage() {
   const trending = getTrendingNow().slice(0, 4);
-  const { stats } = Route.useLoaderData() as {
-    stats: { total: number; backed: number; mixed: number; debunked: number };
-  };
-  const total = TRENDS.length + stats.total;
-  const backed = TRENDS.filter((t) => t.verdict === "backed").length + stats.backed;
-  const debunked = TRENDS.filter((t) => t.verdict === "debunked").length + stats.debunked;
-  const mixed = TRENDS.filter((t) => t.verdict === "mixed").length + stats.mixed;
-
   const marqueeItems = TRENDS.slice(0, 14);
-  // Build mosaic tiles tied to real trends (so colors map to verdicts)
-  const mosaicTrends = TRENDS.slice(0, 24);
+
+  const [recents, setRecents] = useState<RecentSearch[]>(SEED_SEARCHES);
+  useEffect(() => {
+    const load = () => {
+      const r = getRecentSearches();
+      // merge user searches in front of the seed mosaic so the wall stays full
+      const merged = [
+        ...r,
+        ...SEED_SEARCHES.filter(
+          (s) => !r.some((x) => x.q.toLowerCase() === s.q.toLowerCase()),
+        ),
+      ].slice(0, 24);
+      setRecents(merged);
+    };
+    load();
+    return subscribeRecentSearches(load);
+  }, []);
 
   return (
     <div className="relative min-h-[100svh] flex flex-col">
@@ -93,24 +89,23 @@ function HomePage() {
         <div className="mx-auto grid h-full max-w-7xl grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-12 lg:grid-rows-6">
           {/* Hero */}
           <section
-            className="paper-card relative overflow-hidden p-6 sm:p-8 lg:col-span-8 lg:row-span-4 animate-veda-in"
-            style={{ transform: "rotate(-0.4deg)" }}
+            className="paper-card tile-rose relative overflow-hidden p-6 sm:p-8 lg:col-span-8 lg:row-span-4 animate-veda-in"
+            style={{ transform: "rotate(-0.6deg)" }}
           >
-            {/* faded arch behind hero */}
             <div
               aria-hidden
-              className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rj-arch border-2 border-terracotta/30 opacity-60"
+              className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rj-arch border-2 border-terracotta/40 opacity-70"
             />
             <div className="relative flex h-full flex-col justify-between gap-6">
               <div>
                 <span
-                  className="inline-flex items-center gap-2 border border-ink/30 bg-paper-2 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-2"
-                  style={{ borderRadius: "10px 14px 8px 14px" }}
+                  className="inline-flex items-center gap-2 border border-ink/40 bg-paper/70 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-ink-2"
+                  style={{ borderRadius: "12px 6px 14px 8px" }}
                 >
                   <span className="h-1.5 w-1.5 animate-veda-pulse rounded-full bg-terracotta" />
                   Veda · evidence engine
                 </span>
-                <h1 className="font-display mt-5 text-balance text-3xl font-medium leading-[1.02] tracking-tight text-foreground sm:text-5xl lg:text-[3.5rem]">
+                <h1 className="font-display mt-5 text-balance text-3xl font-medium leading-[1.02] tracking-tight text-foreground sm:text-5xl lg:text-[3.4rem]">
                   Every wellness ritual,
                   <br />
                   <span className="italic text-muted-foreground">weighed against</span>
@@ -125,15 +120,33 @@ function HomePage() {
                     the evidence.
                   </span>
                 </h1>
-                <p className="mt-4 max-w-md font-sans text-sm leading-relaxed text-ink-2 sm:text-base">
-                  Search an ingredient, a tonic, a practice. Get one honest verdict,
-                  drawn from research and the things people whisper online.
-                </p>
               </div>
 
               <div>
                 <SearchBar size="hero" autoFocus />
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-2">
+
+                {/* Search format guidance */}
+                <div
+                  className="mt-3 flex flex-wrap items-start gap-2 border border-dashed border-ink/40 bg-paper/60 px-3 py-2"
+                  style={{ borderRadius: "10px 18px 8px 16px" }}
+                >
+                  <span className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.22em] text-terracotta">
+                    How to ask
+                  </span>
+                  <p className="flex-1 min-w-[14rem] font-sans text-[12px] leading-snug text-ink-2 sm:text-[13px]">
+                    Pair an ingredient or practice with a specific claim. Not just
+                    "creatine" — try{" "}
+                    <em className="font-display not-italic font-medium text-ink">
+                      "creatine for muscle growth"
+                    </em>{" "}
+                    or{" "}
+                    <em className="font-display not-italic font-medium text-ink">
+                      "ice rolling for puffiness."
+                    </em>
+                  </p>
+                </div>
+
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-2">
                   <Legend color="#0f6e6a" label="Backed" />
                   <Legend color="#c98414" label="Mixed" />
                   <Legend color="#b8442a" label="Debunked" />
@@ -143,48 +156,57 @@ function HomePage() {
             </div>
           </section>
 
-          {/* Corpus stats — ink card with marigold trim */}
+          {/* LIVE SEARCHES — replaces the corpus card */}
           <section
-            className="ink-card ink-card-hover relative overflow-hidden p-5 lg:col-span-4 lg:row-span-2 animate-veda-in"
-            style={{ transform: "rotate(0.5deg)" }}
+            className="paper-card tile-indigo relative overflow-hidden p-5 lg:col-span-4 lg:row-span-2 animate-veda-in"
+            style={{ transform: "rotate(0.7deg)" }}
           >
-            <div
-              aria-hidden
-              className="absolute right-0 top-0 h-1.5 w-full"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(90deg, #e08e1a 0 12px, #b8442a 12px 24px, #0f6e6a 24px 36px, #1e3a6e 36px 48px)",
-              }}
-            />
-            <div className="flex items-baseline justify-between pt-1">
-              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-paper/60">
-                The corpus
+            <div className="flex items-baseline justify-between">
+              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-indigo-rj">
+                Being looked up · live
               </span>
-              <span className="font-deva text-xs text-marigold" aria-hidden>
-                संग्रह
+              <span className="font-deva text-xs text-indigo-rj" aria-hidden>
+                अभी
               </span>
             </div>
-            <div className="mt-2 font-display text-5xl font-medium tracking-tight sm:text-6xl">
-              {total}
-              <span className="ml-1 font-sans text-2xl italic text-paper/50">trends</span>
+            <div className="mt-3 grid grid-cols-6 gap-1.5 sm:grid-cols-8 lg:grid-cols-6">
+              {recents.slice(0, 18).map((r, i) => {
+                const rot = ((i * 41) % 9) - 4;
+                return (
+                  <Link
+                    key={r.q + i}
+                    to="/search"
+                    search={{ q: r.q }}
+                    title={r.q}
+                    className="group flex aspect-square items-center justify-center border-[1.5px] border-ink/30 bg-paper/80 transition-all hover:scale-110 hover:border-ink"
+                    style={{
+                      borderRadius: "8px 12px 6px 14px",
+                      transform: `rotate(${rot}deg)`,
+                      color: r.tint,
+                    }}
+                  >
+                    <span className="text-lg leading-none" aria-hidden>
+                      {r.glyph}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-2 font-mono text-[10px] uppercase tracking-[0.14em]">
-              <StatPill label="Backed" value={backed} color="#5fd1b5" />
-              <StatPill label="Mixed" value={mixed} color="#f0b04a" />
-              <StatPill label="Debunked" value={debunked} color="#ef8a6d" />
-            </div>
+            <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.2em] text-indigo-rj/70">
+              Tap a tile · new searches stitch in
+            </p>
           </section>
 
           {/* Trending list */}
           <section
-            className="paper-card flex flex-col p-5 lg:col-span-4 lg:row-span-4 animate-veda-in"
-            style={{ transform: "rotate(0.3deg)" }}
+            className="paper-card tile-sage flex flex-col p-5 lg:col-span-4 lg:row-span-4 animate-veda-in"
+            style={{ transform: "rotate(-0.4deg)" }}
           >
             <div className="flex items-baseline justify-between">
-              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-2">
-                Looking up now
+              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-peacock">
+                Trending verdicts
               </span>
-              <span className="font-deva text-xs text-terracotta" aria-hidden>
+              <span className="font-deva text-xs text-peacock" aria-hidden>
                 आज
               </span>
             </div>
@@ -196,8 +218,8 @@ function HomePage() {
                     <Link
                       to="/trend/$id"
                       params={{ id: t.id }}
-                      className="group flex items-center gap-3 border border-transparent px-2.5 py-2 transition-all hover:border-ink/25 hover:bg-paper-2"
-                      style={{ borderRadius: "12px 16px 10px 14px" }}
+                      className="group flex items-center gap-3 border border-transparent bg-paper/50 px-2.5 py-2 transition-all hover:border-ink/40 hover:bg-paper"
+                      style={{ borderRadius: "14px 8px 18px 10px" }}
                     >
                       <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
                         {String(i + 1).padStart(2, "0")}
@@ -222,45 +244,14 @@ function HomePage() {
               })}
             </ul>
 
-            {/* Mosaic of glyph tiles — block-print wall */}
-            <div className="mt-3">
-              <div className="mb-1.5 flex items-baseline justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-2">
-                  The wall
-                </span>
-                <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                  24 motifs
-                </span>
-              </div>
-              <div className="grid grid-cols-8 gap-1">
-                {MOSAIC_GLYPHS.map((g, i) => {
-                  const t = mosaicTrends[i % mosaicTrends.length];
-                  const meta = VERDICT_META[t.verdict];
-                  const rot = ((i * 37) % 7) - 3;
-                  return (
-                    <Link
-                      key={i}
-                      to="/trend/$id"
-                      params={{ id: t.id }}
-                      title={`${t.name} · ${meta.label}`}
-                      className="group flex aspect-square items-center justify-center border border-ink/20 bg-paper transition-all hover:scale-110 hover:border-ink/60"
-                      style={{
-                        borderRadius: "6px 8px 5px 9px",
-                        transform: `rotate(${rot}deg)`,
-                        color: meta.color,
-                      }}
-                    >
-                      <span className="text-base leading-none" aria-hidden>
-                        {g}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
+            <div className="mt-3 border-t border-dashed border-peacock/40 pt-2">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-peacock/80">
+                Always weighed against research + community
+              </p>
             </div>
           </section>
 
-          {/* Categories — marigold ribbon */}
+          {/* Categories — irregular tile mix */}
           <section className="lg:col-span-8 lg:row-span-2 animate-veda-in">
             <div className="mb-2 flex items-baseline justify-between px-1">
               <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-2">
@@ -272,25 +263,27 @@ function HomePage() {
             </div>
             <div className="grid grid-cols-4 gap-2 sm:gap-3 lg:grid-cols-8">
               {CATEGORIES.map((c, i) => {
-                const tints = [
+                const tints = ["tile-saffron", "tile-rose", "tile-sage", "tile-indigo"];
+                const tintClass = tints[i % tints.length];
+                const colors = [
                   "var(--marigold)",
                   "var(--terracotta)",
                   "var(--peacock)",
                   "var(--indigo-rj)",
                 ];
-                const tint = tints[i % tints.length];
-                const rot = (i % 2 === 0 ? -1 : 1) * (0.4 + (i % 3) * 0.2);
+                const color = colors[i % colors.length];
+                const rot = (i % 2 === 0 ? -1 : 1) * (0.6 + (i % 3) * 0.4);
                 return (
                   <Link
                     key={c.slug}
                     to="/category/$slug"
                     params={{ slug: c.slug }}
-                    className="group paper-card paper-card-hover flex flex-col items-center justify-center gap-1 p-3 text-center"
+                    className={`group paper-card paper-card-hover ${tintClass} flex flex-col items-center justify-center gap-1 p-3 text-center`}
                     style={{ transform: `rotate(${rot}deg)` }}
                   >
                     <span
                       className="font-display text-2xl transition-transform duration-300 group-hover:scale-110"
-                      style={{ color: tint }}
+                      style={{ color }}
                       aria-hidden
                     >
                       {c.icon}
@@ -342,20 +335,5 @@ function Legend({ color, label }: { color: string; label: string }) {
       <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
       {label}
     </span>
-  );
-}
-
-function StatPill({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div
-      className="border border-paper/15 bg-paper/5 px-2 py-1.5"
-      style={{ borderRadius: "8px 10px 7px 11px" }}
-    >
-      <div className="flex items-center gap-1.5">
-        <span aria-hidden className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />
-        <span className="text-paper/60">{label}</span>
-      </div>
-      <div className="mt-0.5 font-display text-lg font-medium tabular-nums">{value}</div>
-    </div>
   );
 }
