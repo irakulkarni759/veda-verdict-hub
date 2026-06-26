@@ -6,31 +6,31 @@ export const VERDICT_META: Record<
 > = {
   backed: {
     label: "Backed",
-    color: "#1f7a4d",
+    color: "#0f6e6a",
     glowClass: "",
-    dotClass: "bg-[#1f7a4d]",
-    badgeClass: "bg-[#1f7a4d]/10 text-[#1f7a4d] border border-[#1f7a4d]/30",
+    dotClass: "bg-[#0f6e6a]",
+    badgeClass: "bg-[#0f6e6a]/12 text-[#0f6e6a] border border-[#0f6e6a]/40",
   },
   mixed: {
     label: "Mixed",
-    color: "#b8851f",
+    color: "#c98414",
     glowClass: "",
-    dotClass: "bg-[#b8851f]",
-    badgeClass: "bg-[#b8851f]/10 text-[#b8851f] border border-[#b8851f]/30",
+    dotClass: "bg-[#c98414]",
+    badgeClass: "bg-[#c98414]/12 text-[#8a5a0d] border border-[#c98414]/40",
   },
   debunked: {
     label: "Debunked",
-    color: "#c0432b",
+    color: "#b8442a",
     glowClass: "",
-    dotClass: "bg-[#c0432b]",
-    badgeClass: "bg-[#c0432b]/10 text-[#c0432b] border border-[#c0432b]/30",
+    dotClass: "bg-[#b8442a]",
+    badgeClass: "bg-[#b8442a]/12 text-[#b8442a] border border-[#b8442a]/40",
   },
   unmapped: {
     label: "Unmapped",
-    color: "#2f5d8a",
+    color: "#1e3a6e",
     glowClass: "",
-    dotClass: "bg-[#2f5d8a]",
-    badgeClass: "bg-[#2f5d8a]/10 text-[#2f5d8a] border border-[#2f5d8a]/30",
+    dotClass: "bg-[#1e3a6e]",
+    badgeClass: "bg-[#1e3a6e]/12 text-[#1e3a6e] border border-[#1e3a6e]/40",
   },
 };
 
@@ -41,3 +41,4 @@ export const VERDICT_FILTERS: { value: "all" | Verdict; label: string }[] = [
   { value: "debunked", label: "Debunked" },
   { value: "unmapped", label: "Unmapped" },
 ];
+
