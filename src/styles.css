@@ -41,68 +41,75 @@
   --color-paper-2: var(--paper-2);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
+  --color-marigold: var(--marigold);
+  --color-terracotta: var(--terracotta);
+  --color-indigo-rj: var(--indigo-rj);
+  --color-peacock: var(--peacock);
+  --color-haldi: var(--haldi);
 
-  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
+  --font-deva: "Tiro Devanagari Hindi", "Fraunces", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 :root {
   --radius: 0.875rem;
 
-  /* Paper & Ink palette */
-  --paper: #f5f3ee;
-  --paper-2: #e8e4dd;
-  --ink: #0d0d0d;
-  --ink-2: #2d2d2d;
+  /* Rajasthani wabi-sabi palette: aged ivory, terracotta, marigold, indigo */
+  --paper: #f1e7d3;
+  --paper-2: #e8dcc2;
+  --ink: #2a1810;
+  --ink-2: #4a2e1f;
 
-  --background: #f5f3ee;
-  --foreground: #0d0d0d;
+  --background: #f1e7d3;
+  --foreground: #2a1810;
 
-  --card: #ffffff;
-  --card-foreground: #0d0d0d;
+  --card: #f7eedb;
+  --card-foreground: #2a1810;
 
-  --popover: #ffffff;
-  --popover-foreground: #0d0d0d;
+  --popover: #f7eedb;
+  --popover-foreground: #2a1810;
 
-  --primary: #0d0d0d;
-  --primary-foreground: #f5f3ee;
+  --primary: #2a1810;
+  --primary-foreground: #f1e7d3;
 
-  --secondary: #e8e4dd;
-  --secondary-foreground: #0d0d0d;
+  --secondary: #e8dcc2;
+  --secondary-foreground: #2a1810;
 
-  --muted: #ece8e1;
-  --muted-foreground: #6b6760;
+  --muted: #ddd0b4;
+  --muted-foreground: #7a5a44;
 
-  --accent: #e8e4dd;
-  --accent-foreground: #0d0d0d;
+  --accent: #e8dcc2;
+  --accent-foreground: #2a1810;
 
-  --destructive: #c0432b;
-  --destructive-foreground: #ffffff;
+  --destructive: #b8442a;
+  --destructive-foreground: #f7eedb;
 
-  --border: rgba(13, 13, 13, 0.12);
-  --input: rgba(13, 13, 13, 0.16);
-  --ring: #0d0d0d;
+  --border: rgba(42, 24, 16, 0.18);
+  --input: rgba(42, 24, 16, 0.22);
+  --ring: #2a1810;
 
-  /* Verdict palette tuned for paper */
-  --verdict-backed: #1f7a4d;
-  --verdict-mixed: #b8851f;
-  --verdict-debunked: #c0432b;
-  --verdict-unmapped: #2f5d8a;
+  /* Rajasthani accent hues */
+  --marigold: #e08e1a;
+  --terracotta: #b8442a;
+  --indigo-rj: #1e3a6e;
+  --peacock: #0f6e6a;
+  --haldi: #d4a418;
+
+  /* Verdict palette tuned for warm paper */
+  --verdict-backed: #0f6e6a;
+  --verdict-mixed: #c98414;
+  --verdict-debunked: #b8442a;
+  --verdict-unmapped: #1e3a6e;
 }
 
-.dark {
-  --background: #f5f3ee;
-  --foreground: #0d0d0d;
-}
+.dark { --background: #f1e7d3; --foreground: #2a1810; }
 
 @layer base {
-  * {
-    border-color: var(--color-border);
-  }
+  * { border-color: var(--color-border); }
 
-  html,
-  body {
+  html, body {
     background-color: var(--paper);
     color: var(--ink);
     font-family: var(--font-sans);
@@ -110,37 +117,48 @@
   }
 
   body {
+    background-color: var(--paper);
+    /* Jali/block-print inspired layered texture */
     background-image:
-      radial-gradient(circle at 1px 1px, rgba(13, 13, 13, 0.06) 1px, transparent 0);
-    background-size: 22px 22px;
+      radial-gradient(circle at 50% 50%, rgba(184, 68, 42, 0.05) 0, transparent 60%),
+      radial-gradient(circle at 0% 100%, rgba(30, 58, 110, 0.06) 0, transparent 55%),
+      radial-gradient(circle at 100% 0%, rgba(224, 142, 26, 0.06) 0, transparent 50%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'><g fill='none' stroke='%232a1810' stroke-opacity='0.07' stroke-width='1'><path d='M22 2 L42 22 L22 42 L2 22 Z'/><circle cx='22' cy='22' r='6'/><path d='M22 8 L22 0 M22 44 L22 36 M8 22 L0 22 M44 22 L36 22'/></g></svg>");
+    background-size: auto, auto, auto, 44px 44px;
     background-attachment: fixed;
     min-height: 100vh;
   }
 
-  ::selection {
-    background: var(--ink);
-    color: var(--paper);
-  }
+  ::selection { background: var(--marigold); color: var(--ink); }
+
+  h1, h2, h3, h4 { font-family: var(--font-display); font-feature-settings: "ss01"; }
 }
 
 @utility font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
 }
 
+@utility font-deva {
+  font-family: var(--font-deva);
+}
+
+/* Hand-cut card: subtle rotation + irregular border-radius (wabi-sabi) */
 @utility paper-card {
-  background: #ffffff;
-  border: 1px solid rgba(13, 13, 13, 0.1);
-  border-radius: var(--radius-2xl);
-  transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1),
+  background: #f7eedb;
+  border: 1px solid rgba(42, 24, 16, 0.22);
+  border-radius: 18px 22px 16px 24px / 22px 16px 24px 18px;
+  box-shadow: 2px 3px 0 0 rgba(42, 24, 16, 0.08);
+  transition: transform 350ms cubic-bezier(0.2, 0.7, 0.2, 1),
     border-color 300ms ease, box-shadow 300ms ease;
 }
 
 @utility paper-card-hover {
   &:hover {
-    transform: translateY(-2px);
-    border-color: rgba(13, 13, 13, 0.4);
-    box-shadow: 6px 6px 0 0 rgba(13, 13, 13, 0.08);
+    transform: translateY(-2px) rotate(-0.4deg);
+    border-color: rgba(184, 68, 42, 0.55);
+    box-shadow: 5px 6px 0 0 rgba(42, 24, 16, 0.14);
   }
 }
 
@@ -148,61 +166,61 @@
   background: var(--ink);
   color: var(--paper);
   border: 1px solid var(--ink);
-  border-radius: var(--radius-2xl);
-  transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 300ms ease;
+  border-radius: 20px 16px 24px 18px / 16px 22px 18px 24px;
+  box-shadow: 3px 4px 0 0 rgba(42, 24, 16, 0.18);
+  transition: transform 350ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 300ms ease;
 }
 
 @utility ink-card-hover {
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 6px 6px 0 0 rgba(13, 13, 13, 0.25);
-  }
+  &:hover { transform: translateY(-2px) rotate(0.3deg); box-shadow: 5px 6px 0 0 rgba(42, 24, 16, 0.28); }
 }
 
-/* Back-compat: legacy classes from earlier dark theme */
+/* A marigold-tinted accent card */
+@utility marigold-card {
+  background: linear-gradient(135deg, #f4c46a 0%, #e08e1a 100%);
+  color: var(--ink);
+  border: 1px solid rgba(42, 24, 16, 0.35);
+  border-radius: 22px 18px 24px 16px / 16px 24px 18px 22px;
+  box-shadow: 3px 4px 0 0 rgba(42, 24, 16, 0.18);
+}
+
+/* Back-compat */
 @utility glass-card {
-  background: #ffffff;
-  border: 1px solid rgba(13, 13, 13, 0.1);
-  border-radius: var(--radius-2xl);
-  transition: transform 300ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    border-color 300ms ease, box-shadow 300ms ease;
+  background: #f7eedb;
+  border: 1px solid rgba(42, 24, 16, 0.22);
+  border-radius: 18px 22px 16px 24px / 22px 16px 24px 18px;
 }
 @utility glass-card-hover {
-  &:hover {
-    transform: translateY(-2px);
-    border-color: rgba(13, 13, 13, 0.4);
-    box-shadow: 6px 6px 0 0 rgba(13, 13, 13, 0.08);
-  }
+  &:hover { transform: translateY(-2px); border-color: rgba(184, 68, 42, 0.55); }
 }
-@utility verdict-glow-backed { box-shadow: 0 0 0 1px rgba(31, 122, 77, 0.25); }
-@utility verdict-glow-mixed { box-shadow: 0 0 0 1px rgba(184, 133, 31, 0.25); }
-@utility verdict-glow-debunked { box-shadow: 0 0 0 1px rgba(192, 67, 43, 0.25); }
-@utility verdict-glow-unmapped { box-shadow: 0 0 0 1px rgba(47, 93, 138, 0.25); }
-@utility search-glow { box-shadow: 6px 6px 0 0 rgba(13, 13, 13, 0.1); }
+@utility verdict-glow-backed { box-shadow: 0 0 0 1px rgba(15, 110, 106, 0.3); }
+@utility verdict-glow-mixed { box-shadow: 0 0 0 1px rgba(201, 132, 20, 0.3); }
+@utility verdict-glow-debunked { box-shadow: 0 0 0 1px rgba(184, 68, 42, 0.3); }
+@utility verdict-glow-unmapped { box-shadow: 0 0 0 1px rgba(30, 58, 110, 0.3); }
+@utility search-glow { box-shadow: 4px 5px 0 0 rgba(42, 24, 16, 0.18); }
+
+/* Decorative arch inspired by Rajasthani jharokha */
+@utility rj-arch {
+  border-radius: 50% 50% 14px 14px / 70% 70% 14px 14px;
+}
 
 @keyframes veda-fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px) rotate(-0.5deg); }
+  to   { opacity: 1; transform: translateY(0) rotate(0); }
 }
-
 @keyframes veda-pulse-dot {
   0%, 100% { opacity: 0.5; transform: scale(1); }
-  50%      { opacity: 1; transform: scale(1.2); }
+  50%      { opacity: 1; transform: scale(1.25); }
 }
-
 @keyframes veda-marquee {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
-
-@utility animate-veda-in {
-  animation: veda-fade-up 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+@keyframes veda-spin-slow {
+  to { transform: rotate(360deg); }
 }
 
-@utility animate-veda-pulse {
-  animation: veda-pulse-dot 2.4s ease-in-out infinite;
-}
-
-@utility animate-veda-marquee {
-  animation: veda-marquee 40s linear infinite;
-}
+@utility animate-veda-in { animation: veda-fade-up 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@utility animate-veda-pulse { animation: veda-pulse-dot 2.4s ease-in-out infinite; }
+@utility animate-veda-marquee { animation: veda-marquee 50s linear infinite; }
+@utility animate-veda-spin { animation: veda-spin-slow 40s linear infinite; }
