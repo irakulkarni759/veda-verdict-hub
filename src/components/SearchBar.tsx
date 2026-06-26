@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { Search, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { pushRecentSearch } from "@/lib/recentSearches";
 
 interface SearchBarProps {
   size?: "hero" | "compact";
@@ -23,8 +24,10 @@ export function SearchBar({
     e.preventDefault();
     const query = q.trim();
     if (!query) return;
+    pushRecentSearch(query);
     navigate({ to: "/search", search: { q: query } });
   };
+
 
   if (size === "compact") {
     return (
