@@ -1,38 +1,32 @@
-// Lightweight client-side store for the "live searches" mosaic on the home page.
-// Persists in localStorage and notifies listeners (same tab + cross-tab).
+// Marks pinned to the wall — one per search.
+const KEY = "veda.marks.v2";
+const COUNTER_KEY = "veda.counter.v2";
+const EVT = "veda:marks";
+const MAX = 240;
 
-const KEY = "veda.recentSearches.v1";
-const EVT = "veda:recent-searches";
-const MAX = 18;
+export type MarkVerdict = "backed" | "mixed" | "debunked";
 
-// A whimsical, hand-printed glyph pool — assigned at random per query so
-// repeated submissions produce a varied, "block-print wall" mosaic.
-const GLYPHS = [
-  "✺", "❋", "◎", "❖", "△", "☾", "◍", "✦", "⟡", "✿", "❀", "☘",
-  "✸", "✜", "◈", "✹", "❂", "❁", "◉", "✱", "❃", "⚘", "☀", "✷",
-  "❉", "♆", "✤", "⚜",
-];
-
-const TINTS = [
-  "#0f6e6a", // peacock
-  "#b8442a", // terracotta
-  "#1e3a6e", // indigo
-  "#c98414", // marigold
-  "#7a5a44", // ink-2
-];
-
-export interface RecentSearch {
+export interface Mark {
   q: string;
-  glyph: string;
-  tint: string;
+  verdict: MarkVerdict;
+  rot: number;     // -4..4
+  dx: number;      // small horizontal jitter px
+  dy: number;      // small vertical jitter px
   at: number;
+  fresh?: boolean; // animate in if just added (set by reader, not persisted)
 }
+
+const VERDICTS: MarkVerdict[] = ["backed", "mixed", "debunked"];
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-export function getRecentSearches(): RecentSearch[] {
+function rand(min: number, max: number) {
+  return Math.random() * (max - min) + min;
+}
+
+export function getMarks(): Mark[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(KEY);
@@ -44,50 +38,89 @@ export function getRecentSearches(): RecentSearch[] {
   }
 }
 
-export function pushRecentSearch(q: string): void {
-  if (typeof window === "undefined") return;
-  const clean = q.trim();
-  if (!clean) return;
-  const current = getRecentSearches().filter(
-    (r) => r.q.toLowerCase() !== clean.toLowerCase(),
-  );
-  const next: RecentSearch[] = [
-    { q: clean, glyph: pick(GLYPHS), tint: pick(TINTS), at: Date.now() },
-    ...current,
-  ].slice(0, MAX);
+export function getCounter(): number {
+  if (typeof window === "undefined") return 0;
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(next));
-    window.dispatchEvent(new CustomEvent(EVT));
+    const raw = window.localStorage.getItem(COUNTER_KEY);
+    return raw ? Math.max(0, parseInt(raw, 10) || 0) : 0;
   } catch {
-    // ignore quota / privacy mode errors
+    return 0;
   }
 }
 
-export function subscribeRecentSearches(cb: () => void): () => void {
+function setCounter(n: number) {
+  try { window.localStorage.setItem(COUNTER_KEY, String(n)); } catch {}
+}
+
+export function addMark(q: string, verdict?: MarkVerdict): Mark | null {
+  if (typeof window === "undefined") return null;
+  const clean = q.trim();
+  if (!clean) return null;
+  const m: Mark = {
+    q: clean,
+    verdict: verdict ?? pick(VERDICTS),
+    rot: rand(-4, 4),
+    dx: rand(-6, 6),
+    dy: rand(-4, 4),
+    at: Date.now(),
+  };
+  const next = [m, ...getMarks()].slice(0, MAX);
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(next));
+    setCounter(getCounter() + 1);
+    window.dispatchEvent(new CustomEvent(EVT, { detail: { freshQ: clean } }));
+  } catch {}
+  return m;
+}
+
+export function subscribeMarks(cb: (freshQ?: string) => void): () => void {
   if (typeof window === "undefined") return () => {};
-  const handler = () => cb();
+  const handler = (e: Event) => {
+    const d = (e as CustomEvent).detail as { freshQ?: string } | undefined;
+    cb(d?.freshQ);
+  };
+  const storage = (e: StorageEvent) => {
+    if (e.key === KEY || e.key === COUNTER_KEY) cb();
+  };
   window.addEventListener(EVT, handler);
-  window.addEventListener("storage", (e) => {
-    if (e.key === KEY) cb();
-  });
+  window.addEventListener("storage", storage);
   return () => {
     window.removeEventListener(EVT, handler);
-    window.removeEventListener("storage", handler as EventListener);
+    window.removeEventListener("storage", storage);
   };
 }
 
-// A small seed so first-time visitors see a populated mosaic.
-export const SEED_SEARCHES: RecentSearch[] = [
-  { q: "creatine for muscle growth", glyph: "✦", tint: "#0f6e6a", at: 0 },
-  { q: "rosemary oil for hair growth", glyph: "✿", tint: "#c98414", at: 0 },
-  { q: "rice water for hair", glyph: "❋", tint: "#c98414", at: 0 },
-  { q: "retinol for wrinkles", glyph: "◎", tint: "#0f6e6a", at: 0 },
-  { q: "hair gummies for thickness", glyph: "✱", tint: "#b8442a", at: 0 },
-  { q: "ashwagandha for stress", glyph: "❖", tint: "#0f6e6a", at: 0 },
-  { q: "collagen for skin", glyph: "❀", tint: "#c98414", at: 0 },
-  { q: "celery juice for detox", glyph: "△", tint: "#b8442a", at: 0 },
-  { q: "magnesium for sleep", glyph: "☾", tint: "#1e3a6e", at: 0 },
-  { q: "niacinamide for pores", glyph: "◍", tint: "#0f6e6a", at: 0 },
-  { q: "apple cider vinegar for weight loss", glyph: "✸", tint: "#b8442a", at: 0 },
-  { q: "castor oil for lashes", glyph: "✜", tint: "#c98414", at: 0 },
-];
+// Back-compat with old SearchBar import path
+export function pushRecentSearch(q: string) { addMark(q); }
+
+// 20 seed marks so the wall is never empty.
+export const SEED_MARKS: Mark[] = [
+  ["rosemary oil", "mixed"],
+  ["collagen peptides", "backed"],
+  ["ashwagandha", "backed"],
+  ["slugging", "backed"],
+  ["celery juice detox", "debunked"],
+  ["magnesium for sleep", "backed"],
+  ["jade roller", "mixed"],
+  ["snail mucin", "backed"],
+  ["creatine monohydrate", "backed"],
+  ["retinol", "backed"],
+  ["dry brushing", "mixed"],
+  ["intermittent fasting", "mixed"],
+  ["gua sha", "mixed"],
+  ["vitamin C serum", "backed"],
+  ["activated charcoal", "debunked"],
+  ["biotin for hair", "mixed"],
+  ["hyaluronic acid", "backed"],
+  ["turmeric for inflammation", "backed"],
+  ["oil pulling", "debunked"],
+  ["melatonin", "backed"],
+].map(([q, v], i) => ({
+  q: q as string,
+  verdict: v as MarkVerdict,
+  // Deterministic so SSR/CSR match
+  rot: ((i * 53) % 80) / 10 - 4,
+  dx: ((i * 31) % 120) / 10 - 6,
+  dy: ((i * 17) % 80) / 10 - 4,
+  at: 0,
+}));
