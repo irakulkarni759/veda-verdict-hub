@@ -8,9 +8,6 @@
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -41,70 +38,70 @@
   --color-paper-2: var(--paper-2);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
-  --color-marigold: var(--marigold);
   --color-terracotta: var(--terracotta);
-  --color-indigo-rj: var(--indigo-rj);
-  --color-peacock: var(--peacock);
-  --color-haldi: var(--haldi);
+  --color-sage: var(--sage);
+  --color-blush: var(--blush);
+  --color-muted-warm: var(--muted-warm);
+  /* legacy aliases kept so old class names don't break */
+  --color-marigold: var(--terracotta);
+  --color-indigo-rj: var(--ink);
+  --color-peacock: var(--sage);
+  --color-haldi: var(--terracotta);
 
-  --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-sans: "Inter Tight", ui-sans-serif, system-ui, sans-serif;
-  --font-deva: "Tiro Devanagari Hindi", "Fraunces", serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-deva: "Tiro Devanagari Hindi", "Cormorant Garamond", serif;
+  --font-mono: "Space Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 :root {
-  --radius: 0.875rem;
+  --radius: 0.5rem;
 
-  /* Rajasthani wabi-sabi palette: aged ivory, terracotta, marigold, indigo */
-  --paper: #f1e7d3;
-  --paper-2: #e8dcc2;
-  --ink: #2a1810;
-  --ink-2: #4a2e1f;
+  /* Veda — Mughal manuscript palette */
+  --paper: #F4EDE0;        /* ivory parchment */
+  --paper-2: #EBE3D2;      /* input fill */
+  --ink: #1B3448;          /* deep navy */
+  --ink-2: #2A1A10;        /* botanical stem */
+  --terracotta: #B84040;   /* accent / flowers */
+  --sage: #5B7B5E;         /* leaves */
+  --blush: #E5C4BA;        /* stats background */
+  --muted-warm: #8A7060;   /* muted text */
 
-  --background: #f1e7d3;
-  --foreground: #2a1810;
+  --background: var(--paper);
+  --foreground: var(--ink);
 
-  --card: #f7eedb;
-  --card-foreground: #2a1810;
+  --card: #F7F1E5;
+  --card-foreground: var(--ink);
+  --popover: #F7F1E5;
+  --popover-foreground: var(--ink);
 
-  --popover: #f7eedb;
-  --popover-foreground: #2a1810;
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
 
-  --primary: #2a1810;
-  --primary-foreground: #f1e7d3;
+  --secondary: var(--paper-2);
+  --secondary-foreground: var(--ink);
 
-  --secondary: #e8dcc2;
-  --secondary-foreground: #2a1810;
+  --muted: #E8DFCC;
+  --muted-foreground: var(--muted-warm);
 
-  --muted: #ddd0b4;
-  --muted-foreground: #7a5a44;
+  --accent: var(--blush);
+  --accent-foreground: var(--ink);
 
-  --accent: #e8dcc2;
-  --accent-foreground: #2a1810;
+  --destructive: var(--terracotta);
+  --destructive-foreground: var(--paper);
 
-  --destructive: #b8442a;
-  --destructive-foreground: #f7eedb;
+  --border: rgba(27, 52, 72, 0.18);
+  --input: rgba(27, 52, 72, 0.22);
+  --ring: var(--ink);
 
-  --border: rgba(42, 24, 16, 0.18);
-  --input: rgba(42, 24, 16, 0.22);
-  --ring: #2a1810;
-
-  /* Rajasthani accent hues */
-  --marigold: #e08e1a;
-  --terracotta: #b8442a;
-  --indigo-rj: #1e3a6e;
-  --peacock: #0f6e6a;
-  --haldi: #d4a418;
-
-  /* Verdict palette tuned for warm paper */
-  --verdict-backed: #0f6e6a;
-  --verdict-mixed: #c98414;
-  --verdict-debunked: #b8442a;
-  --verdict-unmapped: #1e3a6e;
+  /* Verdict palette: muted, hand-painted */
+  --verdict-backed: #3D6045;
+  --verdict-mixed: #B5861A;
+  --verdict-debunked: #9B2A1A;
+  --verdict-unmapped: #1B3448;
 }
 
-.dark { --background: #f1e7d3; --foreground: #2a1810; }
+.dark { --background: var(--paper); --foreground: var(--ink); }
 
 @layer base {
   * { border-color: var(--color-border); }
@@ -113,140 +110,74 @@
     background-color: var(--paper);
     color: var(--ink);
     font-family: var(--font-sans);
+    font-weight: 300;
     -webkit-font-smoothing: antialiased;
   }
 
-  body {
-    background-color: var(--paper);
-    /* Jali/block-print inspired layered texture */
-    background-image:
-      radial-gradient(circle at 50% 50%, rgba(184, 68, 42, 0.05) 0, transparent 60%),
-      radial-gradient(circle at 0% 100%, rgba(30, 58, 110, 0.06) 0, transparent 55%),
-      radial-gradient(circle at 100% 0%, rgba(224, 142, 26, 0.06) 0, transparent 50%),
-      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'><g fill='none' stroke='%232a1810' stroke-opacity='0.07' stroke-width='1'><path d='M22 2 L42 22 L22 42 L2 22 Z'/><circle cx='22' cy='22' r='6'/><path d='M22 8 L22 0 M22 44 L22 36 M8 22 L0 22 M44 22 L36 22'/></g></svg>");
-    background-size: auto, auto, auto, 44px 44px;
-    background-attachment: fixed;
-    min-height: 100vh;
-  }
+  body { min-height: 100vh; }
 
-  ::selection { background: var(--marigold); color: var(--ink); }
+  ::selection { background: var(--terracotta); color: var(--paper); }
 
-  h1, h2, h3, h4 { font-family: var(--font-display); font-feature-settings: "ss01"; }
+  h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 300; }
 }
 
-@utility font-display {
-  font-family: var(--font-display);
-  font-optical-sizing: auto;
-  letter-spacing: -0.015em;
-}
+@utility font-display { font-family: var(--font-display); }
+@utility font-deva { font-family: var(--font-deva); }
 
-@utility font-deva {
-  font-family: var(--font-deva);
-}
-
-/* Hand-cut card: irregular border-radius (wabi-sabi) + slight rotation per instance */
+/* --- Back-compat utilities (used by other routes) --- */
 @utility paper-card {
-  background: #f7eedb;
-  border: 1.5px solid rgba(42, 24, 16, 0.32);
-  border-radius: 28px 14px 32px 18px / 18px 30px 14px 28px;
-  box-shadow: 3px 4px 0 0 rgba(42, 24, 16, 0.10);
-  transition: transform 350ms cubic-bezier(0.2, 0.7, 0.2, 1),
-    border-color 300ms ease, box-shadow 300ms ease;
+  background: #F7F1E5;
+  border: 1px solid rgba(27, 52, 72, 0.22);
+  border-radius: 6px;
 }
-
 @utility paper-card-hover {
-  &:hover {
-    transform: translateY(-2px) rotate(-0.5deg);
-    border-color: rgba(184, 68, 42, 0.65);
-    box-shadow: 6px 7px 0 0 rgba(42, 24, 16, 0.16);
-  }
+  &:hover { transform: translateY(-1px); border-color: rgba(184, 64, 64, 0.5); }
 }
-
-/* Tinted variants — break the monotony */
-@utility tile-rose {
-  background: #f0d9c8;
-  border: 1.5px solid rgba(184, 68, 42, 0.45);
-  border-radius: 14px 30px 18px 28px / 28px 16px 32px 14px;
-  box-shadow: 3px 4px 0 0 rgba(184, 68, 42, 0.14);
-}
-@utility tile-sage {
-  background: #d8e3d0;
-  border: 1.5px solid rgba(15, 110, 106, 0.4);
-  border-radius: 30px 16px 28px 14px / 14px 32px 18px 30px;
-  box-shadow: 3px 4px 0 0 rgba(15, 110, 106, 0.14);
-}
-@utility tile-indigo {
-  background: #d6dbe8;
-  border: 1.5px solid rgba(30, 58, 110, 0.45);
-  border-radius: 18px 28px 14px 32px / 30px 14px 28px 18px;
-  box-shadow: 3px 4px 0 0 rgba(30, 58, 110, 0.14);
-}
-@utility tile-saffron {
-  background: #f3deb0;
-  border: 1.5px solid rgba(201, 132, 20, 0.5);
-  border-radius: 32px 14px 28px 18px / 16px 30px 14px 32px;
-  box-shadow: 3px 4px 0 0 rgba(201, 132, 20, 0.14);
-}
-
 @utility ink-card {
-  background: var(--ink);
-  color: var(--paper);
-  border: 1.5px solid var(--ink);
-  border-radius: 30px 14px 28px 18px / 16px 32px 14px 30px;
-  box-shadow: 4px 5px 0 0 rgba(42, 24, 16, 0.22);
-  transition: transform 350ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 300ms ease;
+  background: var(--ink); color: var(--paper);
+  border: 1px solid var(--ink); border-radius: 6px;
 }
+@utility ink-card-hover { &:hover { transform: translateY(-1px); } }
+@utility tile-rose    { background: #F0DACD; border: 1px solid rgba(184,64,64,0.3); border-radius: 6px; }
+@utility tile-sage    { background: #DCE5D8; border: 1px solid rgba(91,123,94,0.3); border-radius: 6px; }
+@utility tile-indigo  { background: #D8DEE5; border: 1px solid rgba(27,52,72,0.3);  border-radius: 6px; }
+@utility tile-saffron { background: #F1E2C5; border: 1px solid rgba(181,134,26,0.3);border-radius: 6px; }
+@utility marigold-card{ background: var(--terracotta); color: var(--paper); border-radius: 6px; }
+@utility glass-card   { background: #F7F1E5; border: 1px solid rgba(27,52,72,0.2); border-radius: 6px; }
+@utility glass-card-hover { &:hover { border-color: rgba(184,64,64,0.5); } }
+@utility verdict-glow-backed { box-shadow: 0 0 0 1px rgba(61, 96, 69, 0.3); }
+@utility verdict-glow-mixed  { box-shadow: 0 0 0 1px rgba(181, 134, 26, 0.3); }
+@utility verdict-glow-debunked { box-shadow: 0 0 0 1px rgba(155, 42, 26, 0.3); }
+@utility verdict-glow-unmapped { box-shadow: 0 0 0 1px rgba(27, 52, 72, 0.3); }
+@utility search-glow { box-shadow: 0 2px 0 0 rgba(27,52,72,0.12); }
+@utility rj-arch { border-radius: 50% 50% 6px 6px / 70% 70% 6px 6px; }
 
-@utility ink-card-hover {
-  &:hover { transform: translateY(-2px) rotate(0.3deg); box-shadow: 5px 6px 0 0 rgba(42, 24, 16, 0.28); }
+/* --- Animations --- */
+@keyframes veda-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes veda-pulse-dot { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+@keyframes veda-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes veda-draw { to { stroke-dashoffset: 0; } }
+@keyframes veda-pin-in {
+  0%   { opacity: 0; transform: scale(0.7) rotate(var(--rot, 0deg)); }
+  60%  { opacity: 1; transform: scale(1.06) rotate(var(--rot, 0deg)); }
+  100% { opacity: 1; transform: scale(1)    rotate(var(--rot, 0deg)); }
 }
+@keyframes veda-fade-soft { from { opacity: 0; } to { opacity: 1; } }
 
-/* A marigold-tinted accent card */
-@utility marigold-card {
-  background: linear-gradient(135deg, #f4c46a 0%, #e08e1a 100%);
-  color: var(--ink);
-  border: 1px solid rgba(42, 24, 16, 0.35);
-  border-radius: 22px 18px 24px 16px / 16px 24px 18px 22px;
-  box-shadow: 3px 4px 0 0 rgba(42, 24, 16, 0.18);
-}
+@utility animate-veda-in     { animation: veda-fade-up 700ms cubic-bezier(0.2,0.7,0.2,1) both; }
+@utility animate-veda-pulse  { animation: veda-pulse-dot 2.4s ease-in-out infinite; }
+@utility animate-veda-marquee{ animation: veda-marquee 50s linear infinite; }
+@utility animate-veda-pin    { animation: veda-pin-in 600ms cubic-bezier(0.2,0.7,0.2,1) both; }
+@utility animate-veda-fade   { animation: veda-fade-soft 900ms ease-out both; }
 
-/* Back-compat */
-@utility glass-card {
-  background: #f7eedb;
-  border: 1px solid rgba(42, 24, 16, 0.22);
-  border-radius: 18px 22px 16px 24px / 22px 16px 24px 18px;
+/* SVG draw-on-load: applied to <path class="veda-draw"> */
+.veda-draw {
+  stroke-dasharray: var(--len, 2000);
+  stroke-dashoffset: var(--len, 2000);
+  animation: veda-draw 1.5s cubic-bezier(0.4, 0.0, 0.2, 1) 0.15s forwards;
 }
-@utility glass-card-hover {
-  &:hover { transform: translateY(-2px); border-color: rgba(184, 68, 42, 0.55); }
+.veda-draw-slow {
+  stroke-dasharray: var(--len, 3000);
+  stroke-dashoffset: var(--len, 3000);
+  animation: veda-draw 2.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s forwards;
 }
-@utility verdict-glow-backed { box-shadow: 0 0 0 1px rgba(15, 110, 106, 0.3); }
-@utility verdict-glow-mixed { box-shadow: 0 0 0 1px rgba(201, 132, 20, 0.3); }
-@utility verdict-glow-debunked { box-shadow: 0 0 0 1px rgba(184, 68, 42, 0.3); }
-@utility verdict-glow-unmapped { box-shadow: 0 0 0 1px rgba(30, 58, 110, 0.3); }
-@utility search-glow { box-shadow: 4px 5px 0 0 rgba(42, 24, 16, 0.18); }
-
-/* Decorative arch inspired by Rajasthani jharokha */
-@utility rj-arch {
-  border-radius: 50% 50% 14px 14px / 70% 70% 14px 14px;
-}
-
-@keyframes veda-fade-up {
-  from { opacity: 0; transform: translateY(10px) rotate(-0.5deg); }
-  to   { opacity: 1; transform: translateY(0) rotate(0); }
-}
-@keyframes veda-pulse-dot {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50%      { opacity: 1; transform: scale(1.25); }
-}
-@keyframes veda-marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-@keyframes veda-spin-slow {
-  to { transform: rotate(360deg); }
-}
-
-@utility animate-veda-in { animation: veda-fade-up 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-@utility animate-veda-pulse { animation: veda-pulse-dot 2.4s ease-in-out infinite; }
-@utility animate-veda-marquee { animation: veda-marquee 50s linear infinite; }
-@utility animate-veda-spin { animation: veda-spin-slow 40s linear infinite; }
